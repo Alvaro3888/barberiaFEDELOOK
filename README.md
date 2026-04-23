@@ -28,3 +28,21 @@ la barberia FEDELOOk
 
 Alcance del proyecto
 el alcance del proyecto de momento es solo web donde se espera llegar a una aplicacion web o un sistema web hibrido que funcione en las distintas plataformas tecnologicas ( celular, tablet, pc,radio fm ajja, etc)
+
+
+Cronogramas de actividades
+*se tiene pensado que hasta mayo tener las ideas claras del desarrollo del sistema.
+*asi tambien se espera que hasta agosto ya este en la ultima etapa del sistema para avanzar a la sigueinte estapa de testeo
+etapa final: con el proyecto terminado implementar y subr a un hosting y dominio. y defensa del proyecto
+
+estudio de factibilidad
+*Tecnica :
+
+*economica: el cliente deberia tener almenos un telefono movil con internet para poder utilizar el sistema web, ya que este es multiplataformas con respecto a tamaños de pantallas. debe disponer de un saldo fijo destinado para comprar el hosting y dominio y bueno asi tambien mantenerlo en la nube
+
+*Operativa:
+debe tener una interfaz amigable que vaya acorde al rubro con respecto a colores y facil navegacion.
+
+*requerimientos funcionales 
+ * requerimientos generales
+  *requerimientos funcionales

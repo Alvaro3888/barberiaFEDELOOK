@@ -2,7 +2,7 @@ Barberia FEDE LOOk
 Institucion: Populorum Progressio Intela N°7
 AÑO: 2026
 Autor : Estrada Alvaro 42529252@populorumjujuy.ar
-
+## Profesores:
 definicion del problema:
 FEDELOOK es una peluqueria masculina con alta demanda en San pedro de jujuy donde ofrece los distintos servicios y diseños a clientes masculinos.
 la misma al tener gran demanda de clientes y poco orden en sus agendas ya que utilizan el whatsapp para gestionar el mismo. este resulta ser muy tardado y poco efectivo. pero obviamente en su actualidad cumple su funcion ya que hoy en dia solo se manejan con ese metodo.  

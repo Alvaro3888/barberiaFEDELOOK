@@ -28,6 +28,7 @@ la barberia FEDELOOk
 
 Alcance del proyecto
 el alcance del proyecto de momento es solo web donde se espera llegar a una aplicacion web o un sistema web hibrido que funcione en las distintas plataformas tecnologicas ( celular, tablet, pc,radio fm ajja, etc)
+<<<<<<< HEAD
 
 
 Cronogramas de actividades
@@ -46,3 +47,5 @@ debe tener una interfaz amigable que vaya acorde al rubro con respecto a colores
 *requerimientos funcionales 
  * requerimientos generales
   *requerimientos funcionales
+=======
+>>>>>>> 0b06dd453fe3d20f9ca565827452bc57c62a9572

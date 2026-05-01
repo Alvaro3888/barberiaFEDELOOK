@@ -49,3 +49,27 @@ debe tener una interfaz amigable que vaya acorde al rubro con respecto a colores
   *requerimientos funcionales
 =======
 >>>>>>> 0b06dd453fe3d20f9ca565827452bc57c62a9572
+# Script para calcular edad
+
+Este script calcula la edad de una persona a partir de su fecha de nacimiento.
+
+## Cómo ejecutarlo
+
+1. Clonar el repositorio:
+   ```bash
+   git clone <URL-del-repositorio>
+   cd <nombre-del-repo>
+
+para ejecutar script 
+python calcular_edad.py
+
+link de ejecución 
+
+---
+
+## 3. Guardar cambios y hacer commit
+En la terminal, dentro de tu repositorio:
+
+```bash
+git add calcular_edad.py README.md
+git commit -m "Agregar script calcular edad y README con instrucciones"

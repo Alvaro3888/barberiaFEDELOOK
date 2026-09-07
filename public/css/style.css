@@ -1,0 +1,167 @@
+/* ====== Paleta base ====== */
+body.bg-paper {
+    background-color: #F6F2E8;
+    color: #1C1918;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* ====== Navbar ====== */
+.navbar {
+    transition: background-color 0.3s ease;
+}
+.navbar.border-ink {
+    border-bottom: 2px solid #1C1918;
+}
+.navbar .navbar-brand {
+    color: #1C1918;
+    font-weight: bold;
+}
+.navbar .nav-link {
+    color: #1C1918;
+    transition: color 0.3s ease;
+}
+.navbar .nav-link:hover {
+    color: #B08D57; /* dorado sutil */
+}
+
+/* ====== Botón personalizado ====== */
+.btn-oxblood {
+    background: linear-gradient(135deg, #7A2426, #5a1b1d);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none; /* para que <a> no se vea como link */
+    display: inline-block;
+}
+.btn-oxblood:hover {
+    background: linear-gradient(135deg, #a83234, #7A2426);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+}
+.btn-oxblood:active {
+    transform: scale(0.97);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+}
+
+/* ====== Secciones ====== */
+.section-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #1C1918;
+    margin-bottom: 1rem;
+}
+.hero-text {
+    font-size: 1rem;
+    color: #333;
+}
+.card {
+    border-radius: 8px;
+    overflow: hidden;
+}
+.card-img-top {
+    border-bottom: 1px solid #ddd;
+}
+/* ====== Panel Admin (Sidebar) ====== */
+.bg-ink {
+    background-color: #1C1918; /* negro tinta */
+    color: #F6F2E8;           /* texto claro */
+}
+
+.bg-ink .nav-link {
+    color: #F6F2E8;
+    transition: color 0.3s ease;
+}
+
+.bg-ink .nav-link:hover {
+    color: #B08D57; /* dorado sutil */
+}
+
+.bg-ink h4 {
+    color: #F6F2E8;
+    font-weight: bold;
+}
+/* Navbar transparente al inicio */
+.navbar {
+    background-color: transparent;
+    transition: background-color 0.3s ease;
+}
+
+/* Navbar con fondo cuando se hace scroll */
+.navbar.scrolled {
+    background-color: #F6F2E8; /* tu color paper */
+    backdrop-filter: blur(6px); /* opcional: efecto glass */
+}
+/* Fondo sólido para el menú hamburguesa en móviles */
+.navbar .collapse {
+    background-color: #F6F2E8; /* mismo color paper */
+    border-top: 2px solid #1C1918; /* línea superior para separar */
+}
+
+/* Links dentro del menú hamburguesa */
+.navbar .collapse .nav-link {
+    color: #1C1918;
+}
+
+.navbar .collapse .nav-link:hover {
+    color: #B08D57; /* dorado sutil */
+}
+/* Fondo sólido y borde solo en pantallas chicas */
+@media (max-width: 991px) {
+    .navbar .collapse {
+        background-color: #F6F2E8; /* color paper */
+        border-top: 2px solid #1C1918; /* línea superior */
+    }
+}
+
+/* En pantallas grandes, sin borde ni fondo extra */
+@media (min-width: 992px) {
+    .navbar .collapse {
+        background-color: transparent;
+        border-top: none;
+    }
+}
+/* Fondo oscuro para el menú hamburguesa en móviles */
+@media (max-width: 991px) {
+    .navbar .collapse.show {
+        background-color: #1C1918; /* color Ink */
+        border-top: 2px solid #F6F2E8; /* línea clara para separar */
+        padding: 1rem;
+    }
+
+    .navbar .collapse.show .nav-link {
+        color: #F6F2E8; /* texto claro */
+    }
+
+    .navbar .collapse.show .nav-link:hover {
+        color: #B08D57; /* dorado sutil */
+    }
+}
+.btn-role {
+    text-decoration: none !important;
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 0.375rem;
+    background-color: #B08D57; /* Brass */
+    color: #fff;
+    border: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-role:hover {
+    background-color: #8C6A3F;
+    transform: scale(1.05);
+}
+
+
+
+
+

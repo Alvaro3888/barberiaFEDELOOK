@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import './style.css';
+
+/* Paleta Figma */
+.bg-paper { background-color: #EDE6D6; }
+.bg-paper-light { background-color: #F6F2E8; }
+.border-ink { border: 2px solid #1C1918; }
+.text-ink { color: #1C1918; }
+.bg-oxblood { background-color: #7A2426; }
+.btn-oxblood { background-color: #7A2426; color: #fff; }
+.text-brass { color: #B08D57; }
+.text-charcoal { color: #3A3733; }
+.btn-outline-ink { border: 1px solid #1C1918; color: #1C1918; }
+
+/* Navbar Figma */
+.navbar { background-color: #1C1918; }
+.navbar-brand, .nav-link { color: #EDE6D6 !important; }
+.navbar .btn-login { background-color: #7A2426; color: #fff; }
+
+/* Tipografías */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+body { font-family: 'Inter', sans-serif; background-color: #EDE6D6; }
+.hero-title, .section-title { font-family: 'Bebas Neue', sans-serif; text-transform: uppercase; color: #1C1918; }
+.hero-text { font-size: 15px; color: #3A3733; }
+.card-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #1C1918; }
+.card-price { font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #B08D57; }

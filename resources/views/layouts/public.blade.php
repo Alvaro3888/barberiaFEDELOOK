@@ -484,25 +484,44 @@
     </header>
 
     <main>
-        @if (request()->routeIs('inicio') || request()->is('/'))
-            <section id="inicio" class="min-vh-100 bg-dots d-flex align-items-center justify-content-center" style="padding-top: 95px !important; padding-bottom: 35px !important;">
-                <div class="container position-relative text-center" style="z-index: 1;">
-                    <div class="d-flex justify-content-center align-items-center mb-3">
-                        <img src="{{ asset('logos/cortebarba.png') }}" alt="Logo Fede looK Barbería" class="hero-logo">
-                    </div>
-                    <div class="beige-line mb-4"></div>
-                    <div class="mx-auto mb-4" style="max-width: 768px;">
-                        <span class="hero-badge d-inline-block px-3 py-2 rounded-pill small fw-semibold mb-3">CLUB DE CABALLEROS</span>
-                        <h1 class="hero-title fw-bold mb-0">Fede looK</h1>
-                        <p class="hero-slogan">Experiencia de primera clase para el caballero moderno.</p>
-                        <p class="hero-subtitle">BARBERÍA PROFESIONAL</p>
-                    </div>
-                    <div class="d-flex justify-content-center">
-                        <a href="{{ route('usuario.catalogo') }}" class="btn hero-button px-4 py-3 fw-semibold">Reservar turno</a>
-                    </div>
+       @if (request()->routeIs('inicio') || request()->is('/'))
+    <section id="inicio" class="min-vh-100 position-relative d-flex align-items-center justify-content-center overflow-hidden" style="padding-top: 95px !important; padding-bottom: 35px !important;">
+        
+        <!-- Imagen de fondo de la barbería -->
+        <div class="position-absolute top-0 start-0 w-100 h-100" style="background-image: url('{{ asset('images/sillas-barberia.jpeg') }}'); background-size: cover; background-position: center; z-index: 0;"></div>
+
+        <!-- Degradado cinematográfico profesional (más oscuro abajo y difuminado, sin cajas duras) -->
+        <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(180deg, rgba(17,17,17,0.3) 0%, rgba(17,17,17,0.75) 100%); z-index: 1;"></div>
+
+        <!-- Contenido principal libre de cajas, con excelente jerarquía visual -->
+        <div class="container position-relative text-center text-white py-5" style="z-index: 2;">
+            
+            <!-- Logo con contenedor circular limpio y sombra elegante -->
+            <div class="d-flex justify-content-center align-items-center mb-4">
+                <div class="bg-white p-3 rounded-circle shadow-lg d-flex align-items-center justify-content-center" style="width: 120px; height: 120px; box-shadow: 0 15px 35px rgba(0,0,0,0.4)!important;">
+                    <img src="{{ asset('logos/cortebarba.png') }}" alt="Logo Fede looK Barbería" style="width: 90px; height: 90px; object-fit: contain;">
                 </div>
-            </section>
-        @endif
+            </div>
+
+            <div class="beige-line mb-4"></div>
+
+            <!-- Bloque de textos con sombras de texto (text-shadow) para máxima legibilidad sin fondos intrusivos -->
+            <div class="mx-auto mb-4" style="max-width: 750px;">
+                <span class="badge px-3 py-2 rounded-pill fw-bold mb-3" style="background: #168F87; color: #ffffff; letter-spacing: 0.15em; font-size: 0.75rem; box-shadow: 0 5px 15px rgba(22,143,135,0.4);">CLUB DE CABALLEROS</span>
+                <h1 class="display-4 fw-bold mb-2 text-white" style="letter-spacing: -0.02em; text-shadow: 0 4px 15px rgba(0,0,0,0.6);">Fede looK</h1>
+                <p class="fs-5 text-light mb-2" style="font-weight: 300; text-shadow: 0 2px 10px rgba(0,0,0,0.6);">Experiencia de primera clase para el caballero moderno.</p>
+                <p class="small text-uppercase text-white-50" style="letter-spacing: 0.2em; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">BARBERÍA PROFESIONAL</p>
+            </div>
+
+            <!-- Botón de acción con fuerte presencia visual -->
+            <div class="d-flex justify-content-center">
+                <a href="{{ route('usuario.catalogo') }}" class="btn hero-button px-5 py-3 fw-bold shadow-lg text-uppercase" style="letter-spacing: 0.05em; font-size: 0.95rem;">Reservar turno</a>
+            </div>
+
+        </div>
+    </section>
+    
+@endif
 
         @yield('content')
     </main>

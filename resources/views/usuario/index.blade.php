@@ -131,7 +131,6 @@
                     $servicioReferencia = $tipo->servicios->first();
                 @endphp
                 <div class="col-12 col-md-6 col-lg-4">
-                    {{-- Enlace corregido: apunta al catálogo integrando el filtro por tipo de servicio --}}
                     <a href="{{ route('usuario.catalogo', ['tipo' => $tipo->id]) }}" class="service-card-link text-decoration-none d-block h-100">
                         <div class="service-type-card h-100 p-4 p-lg-5 rounded-4">
                             <div class="service-card-glow"></div>
@@ -186,7 +185,6 @@
             <p class="text-white-50">Elegí tu servicio, buscá un horario disponible y reservá tu turno de manera rápida y sencilla.</p>
         </div>
         <div class="booking-cta-action">
-            {{-- Botón corregido: lleva directo al catálogo público sin exigir login previo --}}
             <a href="{{ route('usuario.catalogo') }}" class="btn-barber">
                 <span>Reservar turno</span><span>→</span>
             </a>
@@ -195,6 +193,7 @@
 </div>
 </section>
 
+<!-- SECCIÓN ¿CÓMO FUNCIONA? (Con su diseño original de madera intacto) -->
 <section id="como-funciona" class="how-section">
 <div class="how-section-overlay"></div>
 <div class="container py-5 position-relative">
@@ -233,6 +232,25 @@
         </div>
     </div>
 </div>
+</section>
+
+<!-- BANNER PARALLAX DE LUCES REDISEÑADO CON ESPACIADO Y COPY PROFESIONAL -->
+<section class="position-relative overflow-hidden text-white py-5 my-0" style="min-height: 400px; display: flex; align-items: center;">
+    <div class="position-absolute top-0 start-0 w-100 h-100" style="background-image: url('{{ asset('images/luces-barberia.jpeg') }}'); background-size: cover; background-position: center; z-index: 0; background-attachment: fixed;"></div>
+    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: rgba(15, 18, 20, 0.82); z-index: 1;"></div>
+    <div class="container position-relative text-center py-5" style="z-index: 2;">
+        <div class="mx-auto" style="max-width: 700px;">
+            {{-- <span class="badge px-3 py-2 rounded-pill fw-bold mb-3 text-uppercase" style="background: #168F87; color: #ffffff; letter-spacing: 0.2em; font-size: 0.65rem;">Instalaciones de Primer Nivel</span> --}}
+            <h3 class="fw-bold mb-3 text-white fs-2" style="text-shadow: 0 2px 12px rgba(0,0,0,0.6);">Precisión y estilo en cada detalle</h3>
+            <!-- Párrafo con margen inferior (mb-4) para separar correctamente el botón -->
+            <p class="text-light opacity-85 small mb-4" style="line-height: 1.8; font-weight: 300; font-size: 0.95rem;">
+                Visitá nuestras sucursales y viví una experiencia de cuidado personal diseñada exclusivamente para el hombre moderno. Encontrá tu espacio Fede looK más cercano.
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{{ route('sucursales.public') }}" class="btn btn-outline-light px-4 py-3 rounded-pill fw-bold text-uppercase small shadow-sm" style="letter-spacing: 0.12em; border-color: rgba(255,255,255,0.4); transition: all 0.3s ease;">Conocé nuestras sucursales</a>
+            </div>
+        </div>
+    </div>
 </section>
 
 <style>
@@ -337,6 +355,7 @@
     border-color: rgba(0, 169, 157, 0.45) !important;
 }
 </style>
+
 <section class="py-5 bg-light">
     <div class="container py-4">
         
@@ -350,7 +369,7 @@
         <!-- GALERÍA / CARRUSEL DE PRESENTACIÓN -->
         @if(isset($barberos) && $barberos->count() > 0)
             @php
-                $chunkedBarberos = $barberos->chunk(6); // Agrupamos de a 6 máximo por fila
+                $chunkedBarberos = $barberos->chunk(6);
             @endphp
 
             @if($barberos->count() <= 6)
@@ -466,6 +485,7 @@
 
     </div>
 </section>
+
 <!-- SECCIÓN DE EXPERIENCIAS DE CLIENTES (Muestra en Home) -->
 @if(isset($testimonios) && $testimonios->isNotEmpty())
 <section class="testimonials-section py-5">
@@ -533,6 +553,7 @@
     </div>
 </section>
 @endif
+
 <script>
 document.addEventListener('DOMContentLoaded', function() { 
     var modalElement = document.getElementById('modalCalificacionFlotante'); 
@@ -588,6 +609,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } 
 });
 </script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const scrollContainer = document.querySelector('.modern-scrollbar');

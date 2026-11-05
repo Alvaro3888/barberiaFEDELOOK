@@ -160,6 +160,29 @@ body.bg-paper {
     background-color: #8C6A3F;
     transform: scale(1.05);
 }
+/* ====== Paleta FEDELOOK login ====== */
+.bg-paper { background-color: #EDE6D6; }
+.bg-paper-light { background-color: #F6F2E8; }
+.text-ink { color: #1C1918; }
+.text-charcoal { color: #adacaa; }
+.text-oxblood { color: #7A2426; }
+
+.btn-oxblood,
+.btn-oxblood:hover,
+.btn-oxblood:active,
+.btn-oxblood:focus {
+    color: #fff !important;
+}
+.carousel-track {
+    display: flex;
+    width: max-content;
+    animation: scroll-left 20s linear infinite;
+}
+
+@keyframes scroll-left {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); } /* solo la mitad */
+}
 
 
 

@@ -3,23 +3,21 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Fedelook Barbería - Login</title>
+    <title>{{ config('app.name', 'Fede looK Barbería') }}</title>
 
-    <!-- Bootstrap CSS desde CDN -->
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Archivos compilados con Vite -->
+    <!-- Fonts / Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-light">
+<body class="bg-light min-h-screen">
 
-    <!-- Contenido principal -->
-    <main class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
-        @yield('content')
-    </main>
+    <!-- Aquí se inyecta el contenido de tus vistas (Login, Forgot Password, Reset Password) -->
+    @yield('content')
 
-    <!-- Bootstrap JS desde CDN -->
+    <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

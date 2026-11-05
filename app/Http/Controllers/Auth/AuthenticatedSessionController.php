@@ -39,7 +39,7 @@ class AuthenticatedSessionController extends Controller
             } elseif ($usuario->rol->nombre === 'barbero') {
                 return redirect()->route('barbero.dashboard_barbero');
             } else {
-                return redirect()->route('index'); // cliente → index público
+               return redirect()->route('usuario.index');
             }
         }
 

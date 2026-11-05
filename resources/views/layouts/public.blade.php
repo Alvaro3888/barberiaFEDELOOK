@@ -1,94 +1,756 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>Fedelook Barbería</title>
-
-    <!-- Bootstrap CSS -->
+    <title>Fede looK Barbería</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- CSS único con paleta Figma -->
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <style>
+        :root {
+            --black: #111111;
+            --black-soft: #1c1c1c;
+            --dark: #252525;
+            --gray: #777777;
+            --gray-dark: #555555;
+            --gray-light: #f5f5f5;
+            --gray-soft: #fafafa;
+            --white: #ffffff;
+            --cream: #fafafa;
+            --beige: #7A5638;
+            --beige-light: #916A47;
+            --beige-dark: #62432C;
+            --beige-border: #5E402A;
+            --petrol: #168F87;
+            --petrol-light: #1FA69C;
+            --petrol-dark: #0F746E;
+            --petrol-soft: #E8F5F3;
+            --accent: #168F87;
+            --accent-light: #1FA69C;
+            --accent-dark: #0F746E;
+            --red: #168F87;
+            --border: #dddddd;
+            --border-soft: #eeeeee;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 90px;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            color: var(--dark);
+            background: var(--white);
+        }
+
+        a {
+            transition: color .2s ease;
+        }
+
+        .bg-dots {
+            position: relative;
+            background-image: linear-gradient(rgba(250, 250, 250, .55), rgba(250, 250, 250, .55)), url("/images/hero-madera.jpg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .bg-dots::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, .08), rgba(245, 245, 245, .14));
+            pointer-events: none;
+        }
+
+        .card-hover {
+            transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 35px rgba(0, 0, 0, .10);
+            border-color: var(--petrol);
+        }
+
+        #navbar {
+            background: rgba(255, 255, 255, .82);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(220, 220, 220, .75);
+            transition: background .3s ease, box-shadow .3s ease, border-color .3s ease;
+        }
+
+        .navbar-scrolled {
+            background: rgba(255, 255, 255, .96) !important;
+            box-shadow: 0 5px 28px rgba(0, 0, 0, .07);
+            border-bottom-color: var(--border-soft) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .navbar-container {
+            max-width: 1140px;
+        }
+
+        .header-nav-link {
+            color: #686868 !important;
+            text-decoration: none !important;
+            transition: color .2s ease;
+        }
+
+        .header-nav-link:hover,
+        .header-nav-link:focus {
+            color: var(--petrol) !important;
+        }
+
+        .logo-header {
+            width: 38px !important;
+            height: 38px !important;
+            max-width: 38px !important;
+            max-height: 38px !important;
+            object-fit: contain;
+            display: block;
+            flex: 0 0 38px;
+            transition: none;
+        }
+
+        .navbar-container .brand-name {
+            color: var(--dark) !important;
+            letter-spacing: -.015em;
+            transition: none !important;
+        }
+
+        .hero-logo {
+            width: 185px !important;
+            height: 185px !important;
+            min-width: 185px !important;
+            min-height: 185px !important;
+            max-width: 185px !important;
+            max-height: 185px !important;
+            object-fit: contain;
+            object-position: center;
+            display: block;
+            margin: 0 auto;
+            filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .12));
+        }
+
+        .btn-black,
+        .btn-outline-beige {
+            background: #3BB5AC !important;
+            border: 1px solid #3BB5AC !important;
+            color: var(--white) !important;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all .2s ease;
+            box-shadow: 0 4px 10px rgba(22, 143, 135, .16);
+        }
+
+        .btn-black:hover,
+        .btn-outline-beige:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 16px rgba(22, 143, 135, .20);
+        }
+
+        .hero-button {
+            background: #12837C !important;
+            border: 1px solid #12837C !important;
+            color: var(--white) !important;
+            border-radius: 6px;
+            font-weight: 700;
+            box-shadow: 0 5px 14px rgba(0, 0, 0, .16);
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+
+        .hero-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, .20);
+        }
+
+        .hero-badge {
+            background: rgba(255, 255, 255, .92);
+            color: #222222;
+            border: 1px solid rgba(0, 0, 0, .18);
+            letter-spacing: .12em;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .04);
+        }
+
+        .hero-subtitle {
+            color: #777777;
+            font-size: .82rem;
+            font-weight: 600;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            margin-top: .95rem;
+            margin-bottom: 0;
+        }
+
+        .hero-slogan {
+            color: #706f6d;
+            font-size: 1.15rem;
+            line-height: 1.6;
+            font-weight: 400;
+            margin-top: .65rem;
+            margin-bottom: 0;
+        }
+
+        .beige-line {
+            width: 55px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--beige-dark), var(--petrol), var(--beige-dark));
+            border-radius: 50px;
+            margin: 0 auto;
+        }
+
+        .hero-title {
+            color: var(--dark) !important;
+            letter-spacing: -.035em;
+            line-height: 1.1;
+        }
+
+        .dropdown-menu {
+            min-width: 220px;
+            border: 1px solid var(--border);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, .10);
+            border-radius: 14px;
+            padding: 8px;
+            background: rgba(255, 255, 255, .97);
+            backdrop-filter: blur(12px);
+        }
+
+        .dropdown-item {
+            border-radius: 9px;
+            color: #555555;
+            padding: .65rem .8rem;
+            transition: all .2s ease;
+        }
+
+        .dropdown-item:hover,
+        .dropdown-item:focus {
+            background: var(--petrol-soft);
+            color: var(--petrol-dark);
+            padding-left: 1rem;
+        }
+
+        footer {
+            background: #242424 !important;
+        }
+
+        footer h3 {
+            color: #eeeeee;
+            transition: color .2s ease;
+        }
+
+        footer h3:hover {
+            color: var(--petrol-light);
+        }
+
+        #mobileOverlay {
+            background: rgba(0, 0, 0, .64);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .3s ease, visibility .3s ease;
+        }
+
+        #mobileOverlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #mobileMenu {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height .35s ease, opacity .25s ease;
+        }
+
+        #mobileMenu.open {
+            max-height: 800px;
+            opacity: 1;
+        }
+
+        .mobile-menu-container {
+            background: rgba(255, 255, 255, .97);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-soft);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, .08);
+        }
+
+        .mobile-nav-link {
+            color: #666666 !important;
+            transition: all .2s ease;
+        }
+
+        .mobile-nav-link:hover,
+        .mobile-nav-link:focus {
+            background: var(--petrol-soft);
+            color: var(--petrol-dark) !important;
+            padding-left: 8px;
+        }
+
+        .hamburger-line {
+            transition: transform .3s ease, opacity .2s ease, background-color .2s ease;
+        }
+
+        .menu-open .line-1 { transform: translateY(7px) rotate(45deg); }
+        .menu-open .line-2 { opacity: 0; }
+        .menu-open .line-3 { transform: translateY(-7px) rotate(-45deg); }
+
+        #menuButton {
+            background: rgba(255, 255, 255, .88) !important;
+            border: 1px solid #222222 !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .05);
+        }
+
+        #menuButton:hover .hamburger-line {
+            background: var(--petrol) !important;
+        }
+
+        /* Estilos botón flotante WhatsApp */
+        .whatsapp-float {
+            width: 56px;
+            height: 56px;
+            background-color: #25d366;
+            transition: all 0.3s ease;
+        }
+        .whatsapp-float:hover {
+            transform: scale(1.1);
+            background-color: #20ba5a !important;
+            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.4) !important;
+        }
+        .social-btn {
+            transition: all 0.2s ease;
+        }
+        .social-btn:hover {
+            transform: translateY(-2px);
+            background-color: rgba(255,255,255,0.1) !important;
+            color: #168F87 !important;
+            border-color: #168F87 !important;
+        }
+    </style>
 </head>
-<body class="bg-paper">
 
-    <!-- Navbar fijo -->
-    <nav class="navbar navbar-expand-lg border-ink fixed-top bg-paper">
-        <div class="container-fluid">
-            <a class="navbar-brand text-ink fw-bold" href="{{ url('/') }}">
-                FEDELOOK
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link text-ink" href="{{ url('/') }}">Inicio</a></li>
+<body class="text-dark">
 
-                    <!-- Dropdown Servicios -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle text-ink" href="#" id="serviciosDropdown" role="button" data-bs-toggle="dropdown">
-                            Servicios
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ route('servicios.cortes') }}">Cortes</a></li>
-                            <li><a class="dropdown-item" href="{{ route('servicios.barba') }}">Barba</a></li>
-                            <li><a class="dropdown-item" href="{{ route('servicios.coloracion') }}">Coloración</a></li>
+    <div id="mobileOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-md-none" style="z-index: 1040;"></div>
+
+    <header id="navbar" class="fixed-top" style="z-index: 1050;">
+        <nav class="navbar-container mx-auto px-4 py-3">
+            <div class="d-flex align-items-center justify-content-between">
+
+                <a href="{{ url('/') }}" class="d-flex align-items-center gap-3 text-decoration-none position-relative" style="z-index: 1060;">
+                    <img src="{{ asset('logos/cortebarba2.png') }}" alt="Fede looK Barbería" class="logo-header">
+                    <span class="fs-5 fw-bold brand-name">Fede looK</span>
+                </a>
+
+                <!-- Navegación Escritorio -->
+                <div class="d-none d-md-flex align-items-center gap-4">
+                    <a href="{{ url('/') }}" class="header-nav-link fw-medium">Inicio</a>
+
+                    <div class="dropdown">
+                        <a href="{{ route('usuario.catalogo') }}" class="header-nav-link fw-medium dropdown-toggle" id="tiposDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Servicios</a>
+                        <ul class="dropdown-menu" aria-labelledby="tiposDropdown">
+                            @forelse($tipos ?? [] as $tipo)
+                                <li><a class="dropdown-item" href="{{ route('usuario.catalogo', ['tipo' => $tipo->id]) }}">{{ $tipo->nombre }}</a></li>
+                            @empty
+                                <li><span class="dropdown-item text-muted">No hay servicios disponibles</span></li>
+                            @endforelse
                         </ul>
-                    </li>
+                    </div>
 
-                    <li class="nav-item"><a class="nav-link text-ink" href="#">Cómo funciona</a></li>
-                    <li class="nav-item"><a class="nav-link text-ink" href="#">Sucursales</a></li>
-                </ul>
+                    <a href="{{ url('/') }}#como-funciona" class="header-nav-link fw-medium">Cómo funciona</a>
+                    <a href="{{ route('sucursales.public') }}" class="header-nav-link fw-medium">Sucursales</a>
+                </div>
 
-                <!-- Botón dinámico según estado de sesión -->
-@auth
-    {{-- Botón según el rol con color distinto --}}
-    @if(auth()->user()->rol->nombre === 'admin')
-        <a href="{{ route('admin.dashboard_admin') }}" class="btn btn-role me-2">Panel</a>
-    @elseif(auth()->user()->rol->nombre === 'barbero')
-        <a href="{{ route('barbero.dashboard_barbero') }}" class="btn btn-role me-2">Agenda</a>
-    @elseif(auth()->user()->rol->nombre === 'cliente')
-        <a href="{{ route('usuario.turnos') }}" class="btn btn-role me-2">Mis Turnos</a>
+                <!-- Botones y Avatar Escritorio -->
+                <div class="d-none d-md-flex align-items-center gap-2">
+                    @auth
+                        @if (auth()->user()->rol_id == 1)
+                            <a href="{{ route('admin.dashboard_admin') }}" class="btn btn-black px-4 py-2 fw-semibold">Panel</a>
+                        @elseif(auth()->user()->rol_id == 2)
+                            <a href="{{ route('barbero.dashboard_barbero') }}" class="btn btn-black px-4 py-2 fw-semibold">Agenda</a>
+                        @else
+                            <a href="{{ route('usuario.turnos') }}" class="btn btn-black px-4 py-2 fw-semibold">Mis Turnos</a>
+                        @endif
+
+                        <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-beige px-4 py-2 fw-semibold">Cerrar sesión</button>
+                        </form>
+
+                       <a href="{{ route('perfil.index') }}" class="d-inline-flex align-items-center text-decoration-none ms-2" title="Mi Perfil">
+    @php
+        $avatar = Auth::user()->avatar ?? null;
+        $isGoogleAvatar = $avatar && (\Illuminate\Support\Str::startsWith($avatar, ['http://', 'https://']));
+    @endphp
+
+    @if($avatar)
+        @if($isGoogleAvatar)
+            <img src="{{ $avatar }}" alt="Avatar" class="rounded-circle border border-2 border-white shadow-sm global-user-avatar" id="navbar-avatar-preview" style="width: 38px; height: 38px; object-fit: cover;">
+        @else
+            <img src="{{ asset('storage/' . $avatar) }}" alt="Avatar" class="rounded-circle border border-2 border-white shadow-sm global-user-avatar" id="navbar-avatar-preview" style="width: 38px; height: 38px; object-fit: cover;">
+        @endif
+    @else
+        <img src="#" alt="Avatar" class="rounded-circle border border-2 border-white shadow-sm global-user-avatar d-none" id="navbar-avatar-preview" style="width: 38px; height: 38px; object-fit: cover;">
+        
+        <div id="navbar-avatar-placeholder" class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center shadow-sm border border-2 border-white" style="width: 38px; height: 38px; font-weight: bold; font-size: 14px;">
+            {{ strtoupper(substr(Auth::user()->nombre ?? (Auth::user()->name ?? 'U'), 0, 1)) }}
+        </div>
+    @endif
+</a>
+                    @else
+                        <a href="{{ route('login') }}" class="btn btn-black px-4 py-2 fw-semibold shadow-sm">Iniciar sesión</a>
+                    @endauth
+                </div>
+
+                <!-- Controles Móviles (Avatar + Hamburguesa) -->
+                <div class="d-flex align-items-center gap-2 d-md-none">
+                  @auth
+    <a href="{{ route('perfil.index') }}" class="d-inline-flex align-items-center text-decoration-none me-1" title="Mi Perfil">
+        @php
+            $avatar = Auth::user()->avatar ?? null;
+            $isGoogleAvatar = $avatar && (\Illuminate\Support\Str::startsWith($avatar, ['http://', 'https://']));
+        @endphp
+
+        <img src="{{ $avatar ? ($isGoogleAvatar ? $avatar : asset('storage/' . $avatar)) : '#' }}" 
+             alt="Avatar" 
+             class="rounded-circle border border-2 border-white shadow-sm global-user-avatar {{ !$avatar ? 'd-none' : '' }}" 
+             id="navbar-avatar-preview" 
+             style="width: 36px; height: 36px; object-fit: cover;">
+
+        <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center shadow-sm border border-2 border-white {{ $avatar ? 'd-none' : '' }}" 
+             id="navbar-avatar-placeholder" 
+             style="width: 36px; height: 36px; font-weight: bold; font-size: 13px;">
+            {{ strtoupper(substr(Auth::user()->nombre ?? (Auth::user()->name ?? 'U'), 0, 1)) }}
+        </div>
+    </a>
+@endauth
+                    <button id="menuButton" type="button" aria-label="Abrir menú" aria-expanded="false" class="position-relative btn p-0 rounded-3 d-flex flex-column align-items-center justify-content-center" style="z-index: 1060; width: 44px; height: 44px;">
+                        <span class="hamburger-line line-1 d-block rounded" style="width: 24px; height: 2px; margin: 2.5px 0; background: #111111;"></span>
+                        <span class="hamburger-line line-2 d-block rounded" style="width: 24px; height: 2px; margin: 2.5px 0; background: #111111;"></span>
+                        <span class="hamburger-line line-3 d-block rounded" style="width: 24px; height: 2px; margin: 2.5px 0; background: #111111;"></span>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Desplegable Menú Móvil -->
+            <div id="mobileMenu" class="d-md-none">
+                <div class="mobile-menu-container rounded-bottom-4 pb-4 pt-3 mt-3 px-3">
+                    <a href="{{ url('/') }}" class="mobile-link mobile-nav-link d-block mx-2 px-3 py-3 rounded-3 text-secondary text-decoration-none fw-medium">Inicio</a>
+
+                    <div class="px-2 mt-1">
+                        <div class="px-3 py-2 fw-medium small text-uppercase text-secondary" style="letter-spacing: 0.05em;">Servicios</div>
+                        @forelse($tipos ?? [] as $tipo)
+                            <a href="{{ route('usuario.catalogo', ['tipo' => $tipo->id]) }}" class="mobile-link mobile-nav-link d-block mx-2 px-3 py-2 rounded-3 text-secondary text-decoration-none fw-normal">
+                                {{ $tipo->nombre }}
+                            </a>
+                        @empty
+                            <span class="d-block mx-2 px-3 py-2 text-muted small">No hay servicios disponibles</span>
+                        @endforelse
+                    </div>
+
+                    <a href="{{ url('/') }}#como-funciona" class="mobile-link mobile-nav-link d-block mx-2 px-3 py-3 rounded-3 text-secondary text-decoration-none fw-medium">Cómo funciona</a>
+                    <a href="{{ route('sucursales.public') }}" class="mobile-link mobile-nav-link d-block mx-2 px-3 py-3 rounded-3 text-secondary text-decoration-none fw-medium">Sucursales</a>
+
+                    <div class="border-top mt-3 pt-3 px-3" style="border-color: var(--border-soft) !important;">
+                        @auth
+                            @if (auth()->user()->rol_id == 1)
+                                <a href="{{ route('admin.dashboard_admin') }}" class="mobile-link btn btn-black w-100 py-3 fw-semibold">Panel</a>
+                            @elseif(auth()->user()->rol_id == 2)
+                                <a href="{{ route('barbero.dashboard_barbero') }}" class="mobile-link btn btn-black w-100 py-3 fw-semibold">Agenda</a>
+                            @else
+                                <a href="{{ route('usuario.turnos') }}" class="mobile-link btn btn-black w-100 py-3 fw-semibold">Mis Turnos</a>
+                            @endif
+
+                            <form action="{{ route('logout') }}" method="POST" class="mt-3">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-beige w-100 py-3 fw-semibold">Cerrar sesión</button>
+                            </form>
+                        @else
+                            <a href="{{ route('login') }}" class="mobile-link btn btn-black w-100 py-3 fw-semibold">Iniciar sesión</a>
+                        @endauth
+                    </div>
+                </div>
+            </div>
+
+        </nav>
+    </header>
+
+    <main>
+        @if (request()->routeIs('inicio') || request()->is('/'))
+            <section id="inicio" class="min-vh-100 bg-dots d-flex align-items-center justify-content-center" style="padding-top: 95px !important; padding-bottom: 35px !important;">
+                <div class="container position-relative text-center" style="z-index: 1;">
+                    <div class="d-flex justify-content-center align-items-center mb-3">
+                        <img src="{{ asset('logos/cortebarba.png') }}" alt="Logo Fede looK Barbería" class="hero-logo">
+                    </div>
+                    <div class="beige-line mb-4"></div>
+                    <div class="mx-auto mb-4" style="max-width: 768px;">
+                        <span class="hero-badge d-inline-block px-3 py-2 rounded-pill small fw-semibold mb-3">CLUB DE CABALLEROS</span>
+                        <h1 class="hero-title fw-bold mb-0">Fede looK</h1>
+                        <p class="hero-slogan">Experiencia de primera clase para el caballero moderno.</p>
+                        <p class="hero-subtitle">BARBERÍA PROFESIONAL</p>
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <a href="{{ route('usuario.catalogo') }}" class="btn hero-button px-4 py-3 fw-semibold">Reservar turno</a>
+                    </div>
+                </div>
+            </section>
+        @endif
+
+        @yield('content')
+    </main>
+
+    @php
+        $whatsappNumero = \App\Models\Configuracion::get('whatsapp_numero', '5493881234567');
+        $whatsappMensaje = urlencode(\App\Models\Configuracion::get('whatsapp_mensaje', 'Hola Fede looK, quiero consultar por un turno.'));
+        $instagramUrl = \App\Models\Configuracion::get('instagram_url');
+        $facebookUrl = \App\Models\Configuracion::get('facebook_url');
+        $tiktokUrl = \App\Models\Configuracion::get('tiktok_url');
+    @endphp
+
+    <!-- BOTÓN FLOTANTE DE WHATSAPP DINÁMICO -->
+    @if($whatsappNumero)
+    <div class="position-fixed bottom-0 end-0 p-4" style="z-index: 1080;">
+        <a href="https://wa.me/{{ $whatsappNumero }}?text={{ $whatsappMensaje }}" 
+           target="_blank" 
+           rel="noopener noreferrer" 
+           class="d-flex align-items-center justify-content-center text-white rounded-circle shadow-lg text-decoration-none whatsapp-float"
+           title="¡Escribinos por WhatsApp!">
+            <i class="bi bi-whatsapp fs-3"></i>
+        </a>
+    </div>
     @endif
 
-    {{-- Botón de cerrar sesión --}}
-    <form action="{{ route('logout') }}" method="POST" class="d-inline">
-        @csrf
-        <button type="submit" class="btn btn-oxblood">Cerrar sesión</button>
-    </form>
-@else
-    {{-- Botón de iniciar sesión --}}
-    <a href="{{ route('login') }}" class="btn btn-oxblood">Iniciar sesión</a>
-@endauth
+    <footer class="text-white py-5">
+        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-4">
+            <div>
+                <h3 class="fw-bold fs-5 mb-1">Fede looK</h3>
+                <p class="text-secondary mt-1 mb-0">Barbería & Estilo</p>
+            </div>
 
+            <!-- REDES SOCIALES DINÁMICAS -->
+            <div class="d-flex gap-3">
+                @if(!empty($instagramUrl))
+                    <a href="{{ $instagramUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center shadow-sm social-btn text-white" style="width: 42px; height: 42px;">
+                        <i class="bi bi-instagram fs-5"></i>
+                    </a>
+                @endif
+                @if(!empty($facebookUrl))
+                    <a href="{{ $facebookUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center shadow-sm social-btn text-white" style="width: 42px; height: 42px;">
+                        <i class="bi bi-facebook fs-5"></i>
+                    </a>
+                @endif
+                @if(!empty($tiktokUrl))
+                    <a href="{{ $tiktokUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center shadow-sm social-btn text-white" style="width: 42px; height: 42px;">
+                        <i class="bi bi-tiktok fs-5"></i>
+                    </a>
+                @endif
+            </div>
 
-                    
+            <div class="text-secondary small text-center text-md-end">
+                © {{ date('Y') }} Fede looK. Todos los derechos reservados.
             </div>
         </div>
-    </nav>
+    </footer>
 
-    <!-- Contenido principal público -->
-    <div style="margin-top: 80px;">
-        <main class="p-4">
-            @yield('content')
-        </main>
-    </div>
-
-    <!-- Bootstrap JS -->
+    <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-    window.addEventListener("scroll", function() {
-        const navbar = document.querySelector(".navbar");
-        if (window.scrollY > 50) {
-            navbar.classList.add("scrolled");
-        } else {
-            navbar.classList.remove("scrolled");
+        const navbar = document.getElementById('navbar');
+
+        function updateNavbar() {
+            if (window.scrollY > 30) {
+                navbar.classList.add('navbar-scrolled');
+            } else {
+                navbar.classList.remove('navbar-scrolled');
+            }
         }
-    });
+
+        window.addEventListener('scroll', updateNavbar);
+        updateNavbar();
+
+        const menuButton = document.getElementById('menuButton');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+
+        function openMobileMenu() {
+            mobileMenu.classList.add('open');
+            mobileOverlay.classList.add('open');
+            menuButton.classList.add('menu-open');
+            menuButton.setAttribute('aria-expanded', 'true');
+            menuButton.setAttribute('aria-label', 'Cerrar menú');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileMenu() {
+            mobileMenu.classList.remove('open');
+            mobileOverlay.classList.remove('open');
+            menuButton.classList.remove('menu-open');
+            menuButton.setAttribute('aria-expanded', 'false');
+            menuButton.setAttribute('aria-label', 'Abrir menú');
+            document.body.style.overflow = '';
+        }
+
+        if (menuButton) {
+            menuButton.addEventListener('click', function() {
+                if (mobileMenu.classList.contains('open')) {
+                    closeMobileMenu();
+                } else {
+                    openMobileMenu();
+                }
+            });
+        }
+
+        if (mobileOverlay) {
+            mobileOverlay.addEventListener('click', closeMobileMenu);
+        }
+
+        document.querySelectorAll('.mobile-link').forEach(function(link) {
+            link.addEventListener('click', closeMobileMenu);
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && mobileMenu.classList.contains('open')) {
+                closeMobileMenu();
+            }
+        });
+
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768) {
+                closeMobileMenu();
+            }
+        });
     </script>
 
+    @if (isset($turnoPendienteCalificar) && $turnoPendienteCalificar)
+        <!-- MODAL FLOTANTE DE CALIFICACIÓN PENDIENTE -->
+        <div class="modal fade" id="modalCalificacionFlotante" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                    <div class="modal-header bg-dark text-white border-0 py-3">
+                        <h5 class="modal-title fs-6 fw-bold text-uppercase mb-0">
+                            <i class="bi bi-star-fill text-warning me-2"></i> ¡Queremos conocer tu experiencia!
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <form action="{{ route('calificaciones.store') }}" method="POST" id="formCalificacionModal">
+                        @csrf
+                        <input type="hidden" name="turno_id" value="{{ $turnoPendienteCalificar->id }}">
+
+                        <div class="modal-body text-center p-4">
+                            <p class="text-secondary small mb-1">Completaste tu servicio de</p>
+                            <h5 class="fw-bold text-dark mb-1">{{ $turnoPendienteCalificar->servicio->nombre ?? 'Barbería' }}</h5>
+                            <p class="small text-muted mb-3">
+                                Atendido por <strong>{{ $turnoPendienteCalificar->barbero->nombre ?? ($turnoPendienteCalificar->barbero->name ?? 'tu barbero') }}</strong> el {{ \Carbon\Carbon::parse($turnoPendienteCalificar->fecha)->format('d/m/Y') }}
+                            </p>
+
+                            <hr class="my-3 opacity-25">
+
+                            <label class="form-label fw-semibold text-dark mb-2">¿Cómo evaluarías la atención recibida?</label>
+
+                            <div class="star-rating d-flex justify-content-center gap-2 mb-3">
+                                @for ($i = 1; $i <= 5; $i++)
+                                    <input type="radio" id="star_flotante_{{ $i }}" name="puntuacion" value="{{ $i }}" class="d-none" required>
+                                    <label for="star_flotante_{{ $i }}" class="star-label-flotante text-secondary fs-1" data-value="{{ $i }}" style="cursor: pointer; transition: color 0.2s, transform 0.2s;">
+                                        <i class="bi bi-star-fill"></i>
+                                    </label>
+                                @endfor
+                            </div>
+
+                            <div class="mb-2">
+                                <textarea name="comentario" id="comentario_flotante" class="form-control rounded-3" rows="3" placeholder="Escribí un breve comentario sobre tu experiencia..." maxlength="500" required></textarea>
+                                <small id="error-comentario-flotante" class="text-danger d-none mt-1 small">El comentario debe tener al menos 3 caracteres y empezar con una letra (sin números ni símbolos al inicio).</small>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer bg-light border-0 justify-content-between">
+                            <button type="button" class="btn btn-link text-muted text-decoration-none small" data-bs-dismiss="modal">Más tarde</button>
+                            <button type="submit" id="btnEnviarCalificacion" class="btn btn-warning px-4 py-2 fw-bold text-dark shadow-sm" disabled>Enviar Opinión</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .star-label-flotante {
+                color: #cccccc !important;
+                display: inline-block;
+            }
+            .star-label-flotante:hover,
+            .star-label-flotante.activa {
+                color: #ffc107 !important;
+                transform: scale(1.15);
+            }
+        </style>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var modalElement = document.getElementById('modalCalificacionFlotante');
+                if (modalElement) {
+                    var modalCalificacion = new bootstrap.Modal(modalElement);
+                    modalCalificacion.show();
+                }
+
+                const starLabels = document.querySelectorAll('.star-label-flotante');
+                const comentarioInput = document.getElementById('comentario_flotante');
+                const btnEnviar = document.getElementById('btnEnviarCalificacion');
+                const errorMsg = document.getElementById('error-comentario-flotante');
+
+                function validarFormulario() {
+                    const estrellaSeleccionada = document.querySelector('input[name="puntuacion"]:checked');
+                    const texto = comentarioInput ? comentarioInput.value.trim() : '';
+                    const empiezaConLetra = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]/.test(texto);
+                    const cumpleMinimo = texto.length >= 3;
+
+                    if (estrellaSeleccionada && empiezaConLetra && cumpleMinimo) {
+                        btnEnviar.removeAttribute('disabled');
+                        if (errorMsg) errorMsg.classList.add('d-none');
+                    } else {
+                        btnEnviar.setAttribute('disabled', 'true');
+                        if (texto.length > 0 && (!empiezaConLetra || !cumpleMinimo)) {
+                            if (errorMsg) errorMsg.classList.remove('d-none');
+                        } else {
+                            if (errorMsg) errorMsg.classList.add('d-none');
+                        }
+                    }
+                }
+
+                starLabels.forEach((label) => {
+                    label.addEventListener('click', function() {
+                        const selectedValue = parseInt(this.getAttribute('data-value'));
+                        const radioInput = document.getElementById('star_flotante_' + selectedValue);
+                        if (radioInput) {
+                            radioInput.checked = true;
+                            validarFormulario();
+                        }
+
+                        starLabels.forEach((l) => {
+                            const val = parseInt(l.getAttribute('data-value'));
+                            if (val <= selectedValue) {
+                                l.classList.add('activa');
+                            } else {
+                                l.classList.remove('activa');
+                            }
+                        });
+                    });
+                });
+
+                if (comentarioInput) {
+                    comentarioInput.addEventListener('input', validarFormulario);
+                }
+            });
+        </script>
+    @endif
 </body>
+
 </html>

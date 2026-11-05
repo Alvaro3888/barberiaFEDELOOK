@@ -3,83 +3,72 @@
 namespace App\Http\Controllers;
 
 use App\Models\Usuario;
-use App\Models\Sucursal;
-use App\Models\Rol;
 use Illuminate\Http\Request;
 
 class UsuarioController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Usuario::with(['rol','sucursal']);
+        // Filtrar exclusivamente usuarios con rol_id = 3 (Clientes)
+        $query = Usuario::where('rol_id', 3);
 
-        if ($request->filled('sucursal_id')) {
-            $query->where('sucursal_id', $request->sucursal_id);
+        // Filtro por búsqueda de texto (nombre o email)
+        if ($request->filled('buscar')) {
+            $busqueda = $request->buscar;
+            $query->where(function($q) use ($busqueda) {
+                $q->where('nombre', 'like', "%{$busqueda}%")
+                  ->orWhere('email', 'like', "%{$busqueda}%");
+            });
         }
 
-        if ($request->filled('rol_id')) {
-            $query->where('rol_id', $request->rol_id);
-        }
+        $usuarios = $query->get();
 
-        $usuarios   = $query->get();
-        $sucursales = Sucursal::all();
-        $roles      = Rol::all();
-
-        if ($request->ajax()) {
-            return view('admin.usuarios.partials.usuarios_table', compact('usuarios'))->render();
-        }
-
-        return view('admin.usuarios.index', compact('usuarios','sucursales','roles'));
+        return view('admin.usuarios.index', compact('usuarios'));
     }
 
     public function create()
     {
-        $sucursales = Sucursal::all();
-        $roles      = Rol::all();
-        return view('admin.usuarios.create', compact('sucursales','roles'));
+        return view('admin.usuarios.create');
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'nombre'      => 'required|string|max:255',
-            'email'       => 'required|email|unique:usuarios,email',
-            'telefono'    => 'nullable|string|max:50',
-            'password'    => 'required|string|min:6',
-            'rol_id'      => 'required|exists:roles,id',
-            'sucursal_id' => 'required|exists:sucursales,id',
+            'nombre'   => 'required|string|max:255',
+            'email'    => 'required|email|unique:usuarios,email',
+            'telefono' => 'nullable|string|max:50',
+            'password' => 'required|string|min:6',
         ]);
 
-        $usuario = new Usuario($request->only(['nombre','email','telefono','rol_id','sucursal_id']));
+        $usuario = new Usuario($request->only(['nombre', 'email', 'telefono']));
         $usuario->password = bcrypt($request->password);
+        $usuario->rol_id   = 3; // Forzar que sea cliente por defecto
         $usuario->activo   = true;
         $usuario->save();
 
-        return redirect()->route('admin.usuarios.index')->with('success', 'Usuario creado correctamente.');
+        return redirect()->route('admin.usuarios.index')->with('success', 'Cliente registrado correctamente.');
     }
 
     public function edit($id)
     {
-        $usuario    = Usuario::findOrFail($id);
-        $sucursales = Sucursal::all();
-        $roles      = Rol::all();
-        return view('admin.usuarios.edit', compact('usuario','sucursales','roles'));
+        // Asegurar que solo busque si es un cliente (rol_id = 3)
+        $usuario = Usuario::where('rol_id', 3)->findOrFail($id);
+        
+        return view('admin.usuarios.edit', compact('usuario'));
     }
 
     public function update(Request $request, $id)
     {
-        $usuario = Usuario::findOrFail($id);
+        $usuario = Usuario::where('rol_id', 3)->findOrFail($id);
 
         $request->validate([
-            'nombre'      => 'required|string|max:255',
-            'email'       => 'required|email|unique:usuarios,email,' . $usuario->id,
-            'telefono'    => 'nullable|string|max:50',
-            'password'    => 'nullable|string|min:6',
-            'rol_id'      => 'required|exists:roles,id',
-            'sucursal_id' => 'required|exists:sucursales,id',
+            'nombre'   => 'required|string|max:255',
+            'email'    => 'required|email|unique:usuarios,email,' . $usuario->id,
+            'telefono' => 'nullable|string|max:50',
+            'password' => 'nullable|string|min:6',
         ]);
 
-        $usuario->fill($request->only(['nombre','email','telefono','rol_id','sucursal_id']));
+        $usuario->fill($request->only(['nombre', 'email', 'telefono']));
 
         if ($request->filled('password')) {
             $usuario->password = bcrypt($request->password);
@@ -87,29 +76,28 @@ class UsuarioController extends Controller
 
         $usuario->save();
 
-        return redirect()->route('admin.usuarios.index')->with('success', 'Usuario actualizado correctamente.');
+        return redirect()->route('admin.usuarios.index')->with('success', 'Cliente actualizado correctamente.');
     }
 
     public function destroy($id)
-{
-    $usuario = Usuario::findOrFail($id);
+    {
+        $usuario = Usuario::where('rol_id', 3)->findOrFail($id);
 
-    // 🔹 Borrado lógico: marcar como inactivo
-    $usuario->activo = false;
-    $usuario->save();
+        // Borrado lógico: marcar como inactivo
+        $usuario->activo = false;
+        $usuario->save();
 
-    return redirect()->route('admin.usuarios.index')
-        ->with('success', 'Usuario desactivado correctamente.');
-}
-public function activate($id)
-{
-    $usuario = Usuario::findOrFail($id);
-    $usuario->activo = true;
-    $usuario->save();
+        return redirect()->route('admin.usuarios.index')
+            ->with('success', 'Cliente desactivado correctamente.');
+    }
 
-    return redirect()->route('admin.usuarios.index')
-        ->with('success', 'Usuario activado correctamente.');
-}
+    public function activate($id)
+    {
+        $usuario = Usuario::where('rol_id', 3)->findOrFail($id);
+        $usuario->activo = true;
+        $usuario->save();
 
-
+        return redirect()->route('admin.usuarios.index')
+            ->with('success', 'Cliente activado correctamente.');
+    }
 }

@@ -8,6 +8,8 @@ use App\Models\Turno;
 use App\Models\Sucursal;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Imagen;
+use App\Models\TipoServicio;
+use Illuminate\Support\Facades\Storage;
 
 class ServicioController extends Controller
 {
@@ -16,14 +18,13 @@ class ServicioController extends Controller
      */
     public function indexPublic()
     {
-        // 🔹 Solo servicios y sucursales activos
-        $servicios  = Servicio::where('activo', true)->get();
+        $servicios  = Servicio::where('activo', true)->with('tipoServicio.sucursal')->get();
         $sucursales = Sucursal::where('activo', true)->get();
 
         $turnos = [];
         if (Auth::check()) {
             $turnos = Turno::where('cliente_id', Auth::id())
-                           ->with('servicio')
+                           ->with('servicio.tipoServicio.sucursal')
                            ->orderBy('fecha','asc')
                            ->orderBy('hora','asc')
                            ->get();
@@ -36,48 +37,51 @@ class ServicioController extends Controller
     }
 
     /**
-     * Listado de servicios (panel admin).
+     * Listado de servicios (panel admin - Muestra activos e inactivos).
      */
     public function index(Request $request)
     {
-        $query = Servicio::with('sucursal');
+        $query = Servicio::with(['tipoServicio.sucursal']);
 
         if ($request->filled('sucursal_id')) {
-            $query->where('sucursal_id',$request->sucursal_id);
+            $query->whereHas('tipoServicio', fn($q) => $q->where('sucursal_id', $request->sucursal_id));
         }
-        if ($request->filled('categoria')) {
-            $query->where('categoria',$request->categoria);
+        if ($request->filled('tipo_servicio_id')) {
+            $query->where('tipo_servicio_id',$request->tipo_servicio_id);
         }
 
         $servicios   = $query->get();
         $sucursales  = Sucursal::all();
-        $categorias  = Servicio::select('categoria')->distinct()->pluck('categoria');
+        $tipos       = TipoServicio::all();
 
         if ($request->ajax()) {
             return view('admin.servicios.partials.servicios_table', compact('servicios'))->render();
         }
 
-        return view('admin.servicios.index', compact('servicios','sucursales','categorias'));
+        return view('admin.servicios.index', compact('servicios','sucursales','tipos'));
     }
 
     public function create()
     {
-        return view('admin.servicios.create', ['sucursales'=>Sucursal::all()]);
+        $sucursales = Sucursal::all();
+        $tipos = TipoServicio::where('activo', true)->get();
+        return view('admin.servicios.create', compact('sucursales','tipos'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'nombre'        => 'required|string|max:255',
-            'duracion'      => 'required|integer',
-            'precio_actual' => 'required|numeric',
-            'imagen'        => 'nullable|image|max:2048',
-            'categoria'     => 'required|string|max:50',
-            'sucursal_id'   => 'required|exists:sucursales,id',
+            'nombre'            => 'required|string|max:255',
+            'duracion'          => 'required|integer',
+            'precio_actual'     => 'required|numeric',
+            'imagen'            => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'tipo_servicio_id'  => 'required|exists:tipos_servicio,id',
         ]);
 
-        $servicio = new Servicio($request->only(['nombre','duracion','precio_actual','categoria','sucursal_id']));
-        $servicio->activo = true; // 🔹 siempre activo al crear
+        $servicio = new Servicio($request->only([
+            'nombre','duracion','precio_actual','tipo_servicio_id'
+        ]));
+        $servicio->activo = true;
 
         if ($request->hasFile('imagen')) {
             $servicio->imagen = $request->file('imagen')->store('servicios','public');
@@ -90,32 +94,37 @@ class ServicioController extends Controller
 
     public function show(string $id)
     {
-        return view('admin.servicios.show',['servicio'=>Servicio::findOrFail($id)]);
+        return view('admin.servicios.show',['servicio'=>Servicio::with('tipoServicio.sucursal')->findOrFail($id)]);
     }
 
     public function edit(string $id)
     {
-        return view('admin.servicios.edit',[
-            'servicio'=>Servicio::findOrFail($id),
-            'sucursales'=>Sucursal::all()
-        ]);
+        $servicio   = Servicio::findOrFail($id);
+        $sucursales = Sucursal::all();
+        $tipos      = TipoServicio::where('activo', true)->get();
+        return view('admin.servicios.edit', compact('servicio','sucursales','tipos'));
     }
 
-    public function update(Request $request,string $id)
+    public function update(Request $request, string $id)
     {
         $request->validate([
-            'nombre'        => 'required|string|max:255',
-            'duracion'      => 'required|integer',
-            'precio_actual' => 'required|numeric',
-            'imagen'        => 'nullable|image|max:2048',
-            'categoria'     => 'required|string|max:50',
-            'sucursal_id'   => 'required|exists:sucursales,id',
+            'nombre'            => 'required|string|max:255',
+            'duracion'          => 'required|integer',
+            'precio_actual'     => 'required|numeric',
+            'imagen'            => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'tipo_servicio_id'  => 'required|exists:tipos_servicio,id',
         ]);
 
         $servicio = Servicio::findOrFail($id);
-        $servicio->fill($request->only(['nombre','duracion','precio_actual','categoria','sucursal_id']));
+        
+        $servicio->fill($request->only([
+            'nombre','duracion','precio_actual','tipo_servicio_id'
+        ]));
 
         if ($request->hasFile('imagen')) {
+            if ($servicio->imagen && Storage::disk('public')->exists($servicio->imagen)) {
+                Storage::disk('public')->delete($servicio->imagen);
+            }
             $servicio->imagen = $request->file('imagen')->store('servicios','public');
         }
 
@@ -124,7 +133,6 @@ class ServicioController extends Controller
         return redirect()->route('admin.servicios.index')->with('success','Servicio actualizado correctamente.');
     }
 
-    // 🔹 Borrado lógico
     public function destroy($id)
     {
         $servicio = Servicio::findOrFail($id);
@@ -135,7 +143,6 @@ class ServicioController extends Controller
             ->with('success', 'Servicio desactivado correctamente.');
     }
 
-    // 🔹 Recuperar
     public function activate($id)
     {
         $servicio = Servicio::findOrFail($id);
@@ -147,26 +154,29 @@ class ServicioController extends Controller
     }
 
     /**
-     * Vistas públicas de servicios (usuario/servicios/...).
+     * Vistas públicas de servicios filtradas por tipo y estrictamente activos.
      */
     public function cortes()
     {
         return view('usuario.servicios.cortes',[
-            'servicios'=>Servicio::where('categoria','cortes')->where('activo',true)->get()
+            'servicios'=>Servicio::whereHas('tipoServicio', fn($q)=>$q->where('nombre','cortes'))
+                                 ->where('activo',true)->get()
         ]);
     }
 
     public function barba()
     {
         return view('usuario.servicios.barba',[
-            'servicios'=>Servicio::where('categoria','barba')->where('activo',true)->get()
+            'servicios'=>Servicio::whereHas('tipoServicio', fn($q)=>$q->where('nombre','barba'))
+                                 ->where('activo',true)->get()
         ]);
     }
 
     public function coloracion()
     {
         return view('usuario.servicios.coloracion',[
-            'servicios'=>Servicio::where('categoria','coloracion')->where('activo',true)->get()
+            'servicios'=>Servicio::whereHas('tipoServicio', fn($q)=>$q->where('nombre','coloracion'))
+                                 ->where('activo',true)->get()
         ]);
     }
 }

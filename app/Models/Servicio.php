@@ -6,26 +6,29 @@ use Illuminate\Database\Eloquent\Model;
 
 class Servicio extends Model
 {
-     protected $fillable = [
+    protected $fillable = [
         'nombre',
         'duracion',
+        'descripcion',
         'precio_actual',
-        'categoria',
-        'sucursal_id',
+        'activo',            // 🔹 borrado lógico
         'imagen',
-        'activo' // 🔹 agregado para borrado lógico
+        'tipo_servicio_id'   // 🔹 FK hacia tipos_servicio
     ];
 
+    // 🔹 Relación con turnos
     public function turnos()
     {
         return $this->hasMany(Turno::class);
     }
 
-    public function sucursal()
+    // 🔹 Cada servicio pertenece a un tipo de servicio
+    public function tipoServicio()
     {
-        return $this->belongsTo(Sucursal::class);
+        return $this->belongsTo(TipoServicio::class);
     }
 
+    // 🔹 Relación con imágenes
     public function imagenes()
     {
         return $this->hasMany(\App\Models\Imagen::class, 'referencia_id')

@@ -33,14 +33,16 @@ class PersonalController extends Controller
 
         $barberos = $query->get(); // Contiene el personal (Admins y Barberos)
         $sucursales = Sucursal::where('activo', 1)->get();
-        $turnos = TurnoTrabajo::all(); // <-- Cargamos los turnos para la gestión dinámica de horarios
+        $turnos = TurnoTrabajo::all(); 
 
-        return view('admin.personal.index', compact('barberos', 'sucursales', 'turnos'));
+        // Colegas válidos: Admins [1] o Barberos [2] que estén activos y tengan turno de trabajo asignado
+        $colegasSucursal = Usuario::whereIn('rol_id', [1, 2])
+            ->where('activo', 1)
+            ->whereNotNull('turno_trabajo_id')
+            ->get();
+
+        return view('admin.personal.index', compact('barberos', 'sucursales', 'turnos', 'colegasSucursal'));
     }
-
-    /**
-     * Formulario para dar de alta un nuevo Miembro del Personal (Admin o Barbero)
-     */
     public function create()
     {
         $sucursales = Sucursal::where('activo', 1)->get();

@@ -39,9 +39,9 @@ class PagoController extends Controller
                 "email" => "test_user_12345678@testuser.com", // Email genérico de Sandbox
             ],
             "back_urls" => [
-                "success" => "https://copy-end-ferrari-protected.trycloudflare.com/pago/success",
-                "failure" => "https://copy-end-ferrari-protected.trycloudflare.com/pago/failure",
-                "pending" => "https://copy-end-ferrari-protected.trycloudflare.com/pago/pending",
+                "success" => "https://genres-revealed-composed-retailer.trycloudflare.com/pago/success",
+                "failure" => "https://genres-revealed-composed-retailer.trycloudflare.com/pago/failure",
+                "pending" => "https://genres-revealed-composed-retailer.trycloudflare.com/pago/pending",
             ],
             "auto_return" => "approved",
         ]);

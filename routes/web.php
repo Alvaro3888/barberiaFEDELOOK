@@ -120,7 +120,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/turnos/manual', [TurnoController::class, 'storeAdmin'])->name('admin.turnos.storeAdmin');
     Route::put('/admin/turnos/{id}/admin', [TurnoController::class, 'updateAdmin'])->name('admin.turnos.updateAdmin');
     Route::put('/admin/turnos/{id}/cancelar', [TurnoController::class, 'cancelarAdmin'])->name('admin.turnos.cancelarAdmin');
-    
+    Route::post('/admin/turnos/procesar-inasistencia', [TurnoController::class, 'procesarInasistenciaAdmin'])->name('admin.turnos.procesar_inasistencia');
     // Ruta para la Bomba Atómica (Cancelación de emergencia del Admin)
     Route::put('/admin/turnos/{id}/emergencia', [TurnoController::class, 'cancelarEmergencia'])->name('admin.turnos.emergencia');
     

@@ -31,6 +31,14 @@
         </div>
     @endif
 
+    @if(session('warning'))
+        <div class="alert alert-warning border-0 shadow-sm rounded-3 mb-4 d-flex align-items-center animate-fade-in" role="alert" style="background-color: #fef3c7; color: #92400e;">
+            <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
+            <div><span>{{ session('warning') }}</span></div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <!-- Bloque 1: Configuración de Horarios -->
     @if(isset($turnos) && $turnos->count() > 0)
         <div class="p-4 rounded-4 mb-4 shadow-sm border bg-white">
@@ -57,7 +65,6 @@
                             <div>
                                 <div class="mb-3">
                                     <label class="form-label text-uppercase font-weight-bold text-secondary small" style="font-size: 0.7rem; letter-spacing: 0.5px;">Nombre del Turno <span class="text-danger">*</span></label>
-                                    <!-- Input blindado contra números -->
                                     <input type="text" name="nombre" class="form-control border bg-white py-2 input-solo-letras" value="{{ $turno->nombre }}" required autocomplete="off">
                                     <div class="invalid-feedback small">Este campo solo permite letras y espacios.</div>
                                 </div>
@@ -147,6 +154,14 @@
                                 <td class="px-4 py-3 text-end">
                                     <div class="d-flex justify-content-end align-items-center gap-2">
                                         @if($personal->activo)
+                                            <!-- Botón de Inasistencia / Contingencia -->
+                                            <button type="button" class="btn-action" style="color: #d97706; border-color: #fef3c7; background: #fffbeb;" data-bs-toggle="modal" data-bs-target="#modalInasistenciaBarbero{{ $personal->id }}" title="Gestionar Inasistencia y Reasignar Turnos">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                    <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.66c.036.06.035.132.003.192a.11.11 0 0 1-.097.06H1.187a.11.11 0 0 1-.097-.06.16.16 0 0 1 .003-.192l6.857-11.66c.018-.031.033-.051.054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/>
+                                                    <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+                                                </svg>
+                                            </button>
+
                                             <button type="submit" form="form-turno-{{ $personal->id }}" class="btn-action btn-action-primary" title="Guardar cambios">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                                                     <path d="M11 2H9v3h2z"/>
@@ -206,38 +221,144 @@
     </div>
 </div>
 
+<!-- Modales de Inasistencia por Personal -->
+@foreach($barberos as $barbero)
+    @php
+        $turnosPendientesBarbero = \App\Models\Turno::with(['cliente', 'servicio', 'servicios'])
+            ->where('barbero_id', $barbero->id)
+            ->whereIn('estado', ['pendiente', 'confirmado'])
+            ->where('fecha', '>=', now()->toDateString())
+            ->orderBy('fecha', 'asc')
+            ->orderBy('hora', 'asc')
+            ->get();
+
+        $colegasSucursal = \App\Models\Usuario::where('sucursal_id', $barbero->sucursal_id)
+            ->where('id', '!=', $barbero->id)
+            ->get();
+    @endphp
+
+<div class="modal fade" id="modalInasistenciaBarbero{{ $barbero->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 text-start">
+            
+            <!-- Encabezado del Modal -->
+            <div class="modal-header text-white rounded-top-4 p-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+                <h5 class="modal-title fw-bold fs-5">
+                    <i class="bi bi-shield-exclamation text-warning me-2"></i> Protocolo de Rescate: {{ $barbero->nombre }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form action="{{ route('admin.turnos.procesar_inasistencia') }}" method="POST">
+                @csrf
+                <!-- ID oculto del barbero ausente (Requerido por el motor de rescate) -->
+                <input type="hidden" name="barbero_id" value="{{ $barbero->id }}">
+
+                <div class="modal-body p-4">
+                    @if($turnosPendientesBarbero->isEmpty())
+                        <div class="text-center py-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-calendar-check text-success opacity-50 mb-3" viewBox="0 0 16 16">
+                                <path d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>
+                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                            </svg>
+                            <h6 class="fw-bold text-dark">Sin turnos pendientes</h6>
+                            <p class="text-muted small mb-0">Este profesional no tiene citas activas ni futuras por reasignar.</p>
+                        </div>
+                    @else
+                        <!-- Alerta informativa explicativa de los 4 niveles -->
+                        <div class="alert alert-warning border-0 small mb-4 rounded-3 bg-light text-dark shadow-xs">
+                            <i class="bi bi-info-circle-fill me-1 text-warning"></i> 
+                            <strong>Motor de 4 Niveles Activo:</strong> Podés elegir un reemplazo manual en el selector. Si lo dejás en blanco, el sistema intentará reasignarlo automáticamente (Mismo horario ➔ Hueco más tarde ➔ Administrador Comodín ➔ Contingencia).
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead class="table-light small text-uppercase">
+                                    <tr>
+                                        <th class="py-2">Fecha / Hora</th>
+                                        <th class="py-2">Cliente</th>
+                                        <th class="py-2">Servicio</th>
+                                        <th class="py-2">Sustituto Manual (Opcional)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($turnosPendientesBarbero as $turno)
+                                        <tr>
+                                            <td class="py-3">
+                                                <strong class="text-dark d-block" style="font-size: 0.85rem;">{{ \Carbon\Carbon::parse($turno->fecha)->format('d/m/Y') }}</strong>
+                                                <span class="badge bg-light text-dark border font-monospace px-2 py-1" style="font-size: 0.75rem;">
+                                                    {{ \Carbon\Carbon::parse($turno->hora)->format('H:i') }} hs
+                                                </span>
+                                            </td>
+                                            <td class="py-3 fw-semibold small text-dark">
+                                                {{ $turno->cliente->nombre ?? $turno->cliente->name ?? 'Cliente Mostrador' }}
+                                            </td>
+                                            <td class="py-3 text-muted small">
+                                                @if($turno->servicios->isNotEmpty())
+                                                    {{ $turno->servicios->pluck('nombre')->implode(', ') }}
+                                                @else
+                                                    {{ $turno->servicio->nombre ?? '-' }}
+                                                @endif
+                                            </td>
+                                            <td class="py-3">
+                                                <select name="turnos[{{ $turno->id }}]" class="form-select form-select-sm rounded-pill border">
+                                                    <option value="">-- Automático (Sistema decide) --</option>
+                                                    @foreach($colegasSucursal as $colega)
+                                                        @if(in_array($colega->rol_id, [1, 2]) && $colega->sucursal_id == $barbero->sucursal_id && $colega->id != $barbero->id && !empty($colega->turno_trabajo_id))
+                                                            <option value="{{ $colega->id }}">{{ $colega->nombre ?? $colega->name }}</option>
+                                                        @endif
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="modal-footer border-0 bg-light rounded-bottom-4 px-4 py-3">
+                    <button type="button" class="btn btn-sm btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Cerrar</button>
+                    @if($turnosPendientesBarbero->isNotEmpty())
+                        <button type="submit" class="btn btn-sm fw-bold rounded-pill px-4 shadow-sm text-white" style="background: #0d9488;" onclick="return confirm('¿Estás seguro de ejecutar el protocolo de rescate para este profesional?');">
+                            Ejecutar Protocolo de Rescate
+                        </button>
+                    @endif
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
+
 <!-- JavaScript para bloquear números estrictamente por tecla y limpiar al pegar -->
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const inputsTexto = document.querySelectorAll('.input-solo-letras');
 
         inputsTexto.forEach(input => {
-            // Bloquea números directamente al presionar la tecla (key press)
             input.addEventListener('keypress', function(e) {
                 const charCode = e.which ? e.which : e.keyCode;
-                // Permite letras (mayúsculas y minúsculas), tildes, eñes y espacios (códigos ASCII comunes y extendidos)
                 const charStr = String.fromCharCode(charCode);
                 const regexValido = /^[A-Za-zÀ-ÿ\s]$/;
 
                 if (!regexValido.test(charStr)) {
-                    e.preventDefault(); // Cancela la pulsación si es número u otro símbolo
+                    e.preventDefault();
                 }
             });
 
-            // Limpia automáticamente si intentan pegar texto con números (paste)
             input.addEventListener('paste', function(e) {
                 e.preventDefault();
                 const textoPegado = (e.clipboardData || window.clipboardData).getData('text');
                 const textoLimpio = textoPegado.replace(/[^A-Za-zÀ-ÿ\s]/g, '');
                 
-                // Inserta el texto limpio en la posición del cursor
                 const start = this.selectionStart;
                 const end = this.selectionEnd;
                 this.value = this.value.substring(0, start) + textoLimpio + this.value.substring(end);
                 this.setSelectionRange(start + textoLimpio.length, start + textoLimpio.length);
             });
 
-            // Validación visual de apoyo
             input.addEventListener('input', function() {
                 if (this.value.trim().length === 0) {
                     this.classList.add('is-invalid');
@@ -247,7 +368,6 @@
             });
         });
 
-        // Validación general de formularios de turnos antes de enviar
         const formulariosTurnos = document.querySelectorAll('.form-turno-item');
         formulariosTurnos.forEach(form => {
             form.addEventListener('submit', function(e) {

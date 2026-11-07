@@ -11,6 +11,9 @@ use App\Models\Pago;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Http\Mail\TurnoReasignadoMail;
+use App\Services\AbsenceManagerService;
 
 class TurnoController extends Controller
 {
@@ -924,4 +927,16 @@ class TurnoController extends Controller
 
         return redirect()->route('admin.turnos.index')->with('success', $mensajeExito);
     }
+
+public function procesarInasistenciaAdmin(Request $request, AbsenceManagerService $absenceService)
+{
+    $request->validate([
+        'turnos' => 'required|array',
+    ]);
+
+    // Delegamos toda la lógica de los 4 niveles de rescate al servicio
+    $absenceService->procesarInasistenciaBarbero($request->input('turnos', []));
+
+    return redirect()->back()->with('success', 'Inasistencias procesadas correctamente bajo el protocolo de rescate.');
+}
 }

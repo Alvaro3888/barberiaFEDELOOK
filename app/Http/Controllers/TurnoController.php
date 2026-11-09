@@ -17,11 +17,31 @@ use App\Services\AbsenceManagerService;
 
 class TurnoController extends Controller
 {
+    /**
+     * Muestra la vista de reserva de turnos para el cliente.
+     * Filtra y carga únicamente las sucursales que tengan barberos o admins activos con horarios configurados,
+     * además del catálogo de servicios disponibles.
+     */
     public function create(Request $request)
     {
-        $sucursales = Sucursal::where('activo', 1)->get();
+        // Obtenemos los IDs de sucursales que tienen al menos un barbero/admin activo con horario de trabajo
+        $sucursalIdsValidas = Usuario::whereIn('rol_id', [1, 2])
+            ->where('activo', 1)
+            ->whereNotNull('sucursal_id')
+            ->whereHas('turnoTrabajo', function($q) {
+                $q->whereNotNull('hora_inicio');
+            })
+            ->pluck('sucursal_id')
+            ->unique();
+
+        // Filtramos únicamente las sucursales activas que tengan personal operativo
+        $sucursales = Sucursal::where('activo', 1)
+            ->whereIn('id', $sucursalIdsValidas)
+            ->get();
+
         $servicios = Servicio::where('activo', 1)->get();
 
+        // Si el cliente viene seleccionando un servicio desde el catálogo, lo buscamos
         $servicioSeleccionado = null;
         if ($request->filled('servicio_id')) {
             $servicioSeleccionado = Servicio::find($request->servicio_id);
@@ -30,8 +50,13 @@ class TurnoController extends Controller
         return view('usuario.turnos.create', compact('sucursales', 'servicios', 'servicioSeleccionado'));
     }
 
+    /**
+     * Valida e inicia la reserva de un turno web solicitado por un cliente.
+     * Verifica penalizaciones por ausencias, solapamiento de horarios y reserva en sesión antes de ir al pago.
+     */
     public function store(Request $request)
     {
+        // 1. Bloqueo si el cliente se encuentra suspendido por reincidencia en ausencias (No-Show)
         if (auth()->check() && auth()->user()->estaPenalizado()) {
             $fechaFinPenalizacion = Carbon::parse(auth()->user()->penalizado_hasta)->format('d/m/Y H:i');
             return back()
@@ -39,6 +64,7 @@ class TurnoController extends Controller
                 ->with('error', 'Tu cuenta se encuentra suspendida temporalmente para turnos web debido a reiteradas ausencias (hasta el ' . $fechaFinPenalizacion . ' hs). Comunícate con el local.');
         }
 
+        // 2. Validaciones de la solicitud (servicios, barbero, sucursal, antelación mínima de 30 min e intervalos de 15 min)
         $request->validate([
             'servicios'   => 'required|array|min:1',
             'servicios.*' => 'exists:servicios,id',
@@ -72,6 +98,7 @@ class TurnoController extends Controller
         $precioTotal = $serviciosSeleccionados->sum('precio_actual');
         $servicioPrincipalId = $request->servicios[0];
 
+        // 3. Verificación de choques de horario con otros turnos confirmados del mismo barbero
         if (
             $this->existeConflictoHorario(
                 $request->barbero_id,
@@ -88,6 +115,7 @@ class TurnoController extends Controller
                 ]);
         }
 
+        // 4. Se guarda temporalmente en sesión para ser procesado por la pasarela de pago (Mercado Pago)
         session([
             'reserva' => [
                 'cliente_id'       => auth()->id(),
@@ -105,10 +133,15 @@ class TurnoController extends Controller
         return redirect()->route('pago.checkout');
     }
 
+    /**
+     * Carga el formulario para que el cliente pueda reprogramar su turno.
+     * Valida permisos, límites de reprogramaciones (máx. 2) y que falten al menos 2 horas.
+     */
     public function edit($id)
     {
         $turno = Turno::findOrFail($id);
 
+        // Seguridad: solo el cliente dueño del turno puede acceder
         if (auth()->user()->rol->nombre !== 'cliente' || $turno->cliente_id !== auth()->id()) {
             return redirect()->route('usuario.turnos')->with('error', 'No tenés permiso para editar este turno.');
         }
@@ -117,10 +150,12 @@ class TurnoController extends Controller
             return redirect()->route('usuario.turnos')->with('error', 'Solo podés reprogramar turnos confirmados.');
         }
 
+        // Límite de 2 reprogramaciones permitidas por turno
         if (($turno->reprogramaciones_count ?? 0) >= 2) {
             return redirect()->route('usuario.turnos')->with('error', 'Ya alcanzaste el límite máximo de 2 reprogramaciones para este turno.');
         }
 
+        // Regla de antelación mínima de 2 horas para reprogramar
         $horaTurno = Carbon::parse($turno->fecha . ' ' . $turno->hora);
         $minutosRestantes = now()->diffInMinutes($horaTurno, false);
 
@@ -137,10 +172,15 @@ class TurnoController extends Controller
         return view('usuario.turnos.edit', compact('turno', 'servicios', 'sucursales', 'barberos'));
     }
 
+    /**
+     * Procesa la actualización o reprogramación de un turno.
+     * Maneja tanto la reprogramación por parte del cliente como los cambios de estado hechos por el panel de administración.
+     */
     public function update(Request $request, $id)
     {
         $turno = Turno::findOrFail($id);
 
+        // LÓGICA DE REPROGRAMACIÓN DEL CLIENTE
         if (auth()->user()->rol->nombre === 'cliente') {
             if ($turno->cliente_id !== auth()->id()) {
                 abort(403, 'No tenés permiso para editar este turno.');
@@ -175,6 +215,7 @@ class TurnoController extends Controller
                 }],
             ]);
 
+            // Regla de negocio: la nueva fecha no puede superar los 30 días desde la fecha de compra original
             $fechaCreacionOriginal = Carbon::parse($turno->created_at)->startOfDay();
             $nuevaFechaSeleccionada = Carbon::parse($request->fecha)->startOfDay();
 
@@ -192,6 +233,7 @@ class TurnoController extends Controller
             $precioTotal = $serviciosSeleccionados->sum('precio_actual');
             $servicioPrincipalId = $request->servicios[0];
 
+            // Validar que el nuevo horario no choque con otro turno
             if (
                 $this->existeConflictoHorario(
                     $request->barbero_id,
@@ -199,7 +241,7 @@ class TurnoController extends Controller
                     $request->fecha,
                     $request->hora,
                     $duracionTotal,
-                    $turno->id
+                    $turno->id // Excluimos el turno actual de la validación
                 )
             ) {
                 if ($request->expectsJson() || $request->ajax()) {
@@ -210,6 +252,7 @@ class TurnoController extends Controller
                 ]);
             }
 
+            // Actualizar el turno e incrementar el contador de reprogramaciones
             $turno->update([
                 'servicio_id'            => $servicioPrincipalId,
                 'barbero_id'             => $request->barbero_id,
@@ -229,6 +272,7 @@ class TurnoController extends Controller
             return redirect()->route('usuario.turnos')->with('success', 'Turno reprogramado correctamente.');
         }
 
+        // LÓGICA DE ACTUALIZACIÓN DE ESTADO DESDE PANEL ADMIN/BARBERO
         $request->validate([
             'estado' => 'required|in:confirmado,completado,cancelado,ausente',
         ]);
@@ -272,6 +316,10 @@ class TurnoController extends Controller
         return redirect()->back()->with('success', 'El turno fue actualizado correctamente.');
     }
 
+    /**
+     * Procesa la cancelación autogestionada por el cliente web.
+     * Evalúa la regla de las 2hs de antelación y la devolución automática mediante API de Mercado Pago (si supera 24hs sin reprogramaciones previa).
+     */
     public function cancelarCliente($id)
     {
         $turno = Turno::findOrFail($id);
@@ -287,6 +335,7 @@ class TurnoController extends Controller
         $horaTurno = Carbon::parse($turno->fecha . ' ' . $turno->hora);
         $minutosRestantes = now()->diffInMinutes($horaTurno, false);
 
+        // Bloqueo si intenta cancelar a menos de 2 horas del turno
         if ($minutosRestantes < 120 && auth()->user()->rol->nombre === 'cliente') {
             return redirect()->route('usuario.turnos')->with('error', 'El turno está a menos de 2 horas de su inicio y se encuentra bloqueado para autogestión. Comunícate con la barbería.');
         }
@@ -294,7 +343,7 @@ class TurnoController extends Controller
         $pago = Pago::where('turno_id', $turno->id)->where('estado', 'pagado')->first();
         $mensajeExito = 'Turno cancelado correctamente.';
 
-        // REGLA DE HIERRO (Opción A): Solo aplica reembolso si falta >= 24 hs Y NUNCA fue reprogramado
+        // Criterio de reembolso: mas de 24 hs (1440 min) de antelación Y sin reprogramaciones previas
         $aplicaReembolso = ($minutosRestantes >= 1440) && (($turno->reprogramaciones_count ?? 0) === 0);
 
         if ($aplicaReembolso && $pago && $pago->payment_id_mp) {
@@ -304,12 +353,12 @@ class TurnoController extends Controller
                 return redirect()->route('usuario.turnos')->with('error', 'Error de configuración: no se encontró el Access Token de Mercado Pago.');
             }
 
+            // Llamada a la API de Mercado Pago para efectuar el reembolso
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $accessToken,
                 'Content-Type'  => 'application/json',
             ])->post("https://api.mercadopago.com/v1/payments/{$pago->payment_id_mp}/refunds");
 
-            // Valida éxito en API o permite avanzar si estás testeando en entorno local/sandbox
             if ($response->successful() || config('app.env') === 'local') {
                 $pago->update(['estado' => 'reembolsado']);
                 $mensajeExito = 'Turno cancelado y el importe fue reembolsado a través de Mercado Pago.';
@@ -328,13 +377,16 @@ class TurnoController extends Controller
             $mensajeExito = 'Turno cancelado correctamente. (No aplica reembolso por política de reprogramación previa o por cercanía a la fecha).';
         }
 
-        // Actualización estricta de estado (borrado lógico)
         $turno->update([
             'estado' => 'cancelado'
         ]);
 
         return redirect()->route('usuario.turnos')->with('success', $mensajeExito);
     }
+
+    /**
+     * Obtiene el historial de turnos del cliente ordenados por vigentes/próximos y pasados/historial.
+     */
     public function misTurnosUsuario()
     {
         $usuarioId = auth()->id();
@@ -344,6 +396,7 @@ class TurnoController extends Controller
             ->where('cliente_id', $usuarioId)
             ->get();
 
+        // Filtrar turnos activos/próximos
         $turnosProximos = $todosLosTurnos->filter(function ($t) use ($hoyString) {
             $fechaTurno = Carbon::parse($t->fecha)->toDateString();
             $yaPaso = Carbon::parse($t->fecha . ' ' . $t->hora)->isPast();
@@ -353,6 +406,7 @@ class TurnoController extends Controller
             ['hora', 'asc']
         ]);
 
+        // Filtrar historial de turnos pasados o finalizados
         $turnosPasados = $todosLosTurnos->filter(function ($t) use ($hoyString) {
             $fechaTurno = Carbon::parse($t->fecha)->toDateString();
             $yaPaso = Carbon::parse($t->fecha . ' ' . $t->hora)->isPast();
@@ -364,6 +418,9 @@ class TurnoController extends Controller
         return view('usuario.turnos.index', compact('turnos'));
     }
 
+    /**
+     * Muestra la tabla general de gestión de turnos para Administradores y Barberos con filtros avanzados (sucursal, barbero, origen online/presencial, rango de fechas).
+     */
     public function index(Request $request)
     {
         $query = Turno::with(['cliente', 'barbero', 'servicio', 'servicios', 'sucursal', 'pago'])
@@ -382,6 +439,7 @@ class TurnoController extends Controller
             $query->where('estado', $request->estado);
         }
 
+        // Filtro por tipo de canal: Web (Mercado Pago) vs Presencial/Mostrador
         if ($request->filled('tipo_turno')) {
             if ($request->tipo_turno === 'online') {
                 $query->whereHas('pago', function($q) {
@@ -397,6 +455,7 @@ class TurnoController extends Controller
             }
         }
 
+        // Filtros por rango temporal
         if ($request->filled('range')) {
             $today = now()->startOfDay();
             switch ($request->range) {
@@ -433,7 +492,19 @@ class TurnoController extends Controller
 
         $turnos = $vigentes->concat($historial);
 
-        $sucursales = Sucursal::all();
+        // Cargar sucursales operativas para los selectores de los formularios
+        $sucursalIdsValidas = Usuario::whereIn('rol_id', [1, 2])
+            ->where('activo', 1)
+            ->whereNotNull('sucursal_id')
+            ->whereHas('turnoTrabajo', function($q) {
+                $q->whereNotNull('hora_inicio');
+            })
+            ->pluck('sucursal_id')
+            ->unique();
+
+        $sucursales = Sucursal::where('activo', 1)
+            ->whereIn('id', $sucursalIdsValidas)
+            ->get();
         
         $barberos = Usuario::whereHas('rol', function($q) {
             $q->where('nombre', 'barbero');
@@ -448,6 +519,9 @@ class TurnoController extends Controller
         return view('admin.turnos.index', compact('turnos', 'sucursales', 'barberos', 'clientes', 'servicios'));
     }
 
+    /**
+     * Retorna una respuesta JSON con la lista de barberos pertenecientes a una sucursal específica que tengan horarios asignados.
+     */
     public function getBarberosPorSucursal($sucursalId)
     {
         $barberos = Usuario::with(['turnoTrabajo', 'rol'])
@@ -461,6 +535,11 @@ class TurnoController extends Controller
         return response()->json($barberosValidos);
     }
 
+    /**
+     * MÉRITO DE SEGURIDAD / ALGORITMO:
+     * Comprueba si existe un solapamiento/conflicto de horarios para un barbero en una fecha y rango de duración determinado.
+     * Devuelve true si hay choque, false si el rango está libre.
+     */
     private function existeConflictoHorario(
         $barberoId,
         $sucursalId,
@@ -495,6 +574,7 @@ class TurnoController extends Controller
 
             $finExistente = $inicioExistente->copy()->addMinutes($duracionExistente);
 
+            // Fórmula de intersección de rangos temporales: (InicioA < FinB) Y (FinA > InicioB)
             if (
                 $inicioNuevo < $finExistente &&
                 $finNuevo > $inicioExistente
@@ -506,6 +586,9 @@ class TurnoController extends Controller
         return false;
     }
 
+    /**
+     * Retorna en formato JSON los rangos de horas que un barbero ya tiene ocupados para ser bloqueados en la vista del calendario.
+     */
     public function getHorariosOcupados(Request $request)
     {
         $barberoId = $request->query('barbero_id');
@@ -543,6 +626,10 @@ class TurnoController extends Controller
         return response()->json($rangosOcupados);
     }
 
+    /**
+     * Genera dinámicamente en tiempo real una lista de horarios (slots de 15 minutos) que están 100% libres 
+     * dentro de la jornada laboral de un barbero y con espacio suficiente para la duración total del servicio.
+     */
     public function getHorariosDisponibles(Request $request)
     {
         $barberoId = $request->query('barbero_id');
@@ -581,10 +668,12 @@ class TurnoController extends Controller
 
         $slotActual = $hInicioBarbero->copy();
 
+        // Recorrido de los bloques de tiempo dentro de la jornada laboral
         while ($slotActual->copy()->addMinutes($duracionTotal)->lte($hFinBarbero)) {
             $finSlot = $slotActual->copy()->addMinutes($duracionTotal);
             $horaStr = $slotActual->format('H:i');
 
+            // Si es hoy, descarta los horarios que ya pasaron o que están a menos de 30 min
             if ($esHoy && $slotActual->copy()->lt($ahora->copy()->addMinutes(30))) {
                 $slotActual->addMinutes(15);
                 continue;
@@ -615,6 +704,10 @@ class TurnoController extends Controller
         return response()->json($slotsDisponibles);
     }
 
+    /**
+     * Permite a los Administradores o Barberos registrar manualmente un turno presencial / de mostrador.
+     * Crea automáticamente el usuario "Cliente Ocasional" si no está registrado y liquida el pago inmediato.
+     */
     public function storeAdmin(Request $request)
     {
         $request->validate([
@@ -636,6 +729,7 @@ class TurnoController extends Controller
         $servicioPrincipalId = $request->servicios[0];
 
         try {
+            // Transacción en base de datos para garantizar consistencia atómica entre Turno y Pago
             $turno = \DB::transaction(function () use ($request, $duracionTotal, $precioTotal, $servicioPrincipalId) {
                 
                 if (
@@ -656,6 +750,7 @@ class TurnoController extends Controller
                 if ($request->tipo_cliente === 'registrado') {
                     $clienteId = $request->cliente_id;
                 } else {
+                    // Si el cliente no está registrado en el sistema, lo asigna a un perfil comodín de mostrador
                     $clienteOcasional = Usuario::firstOrCreate(
                         ['email' => 'mostrador@barberia.com'],
                         [
@@ -685,6 +780,7 @@ class TurnoController extends Controller
 
                 $nuevoTurno->servicios()->sync($request->servicios);
 
+                // Registra el pago en caja (Efectivo, Débito, Transferencia, etc.)
                 Pago::create([
                     'turno_id'    => $nuevoTurno->id,
                     'monto'       => $precioTotal,
@@ -715,6 +811,10 @@ class TurnoController extends Controller
         return redirect()->route('admin.turnos.index')->with('success', '¡Turno manual otorgado correctamente!');
     }
 
+    /**
+     * Permite al Administrador modificar los datos completos de un turno (servicios, barbero, sucursal, fecha, hora y estado)
+     * validando conflictos antes de persistir.
+     */
     public function updateAdmin(Request $request, $id)
     {
         $turno = Turno::findOrFail($id);
@@ -781,6 +881,9 @@ class TurnoController extends Controller
         return redirect()->route('admin.turnos.index')->with('success', '¡Turno actualizado correctamente!');
     }
 
+    /**
+     * Cancela directamente un turno desde el Panel de Administración (baja administrativa inmediata).
+     */
     public function cancelarAdmin($id)
     {
         $turno = Turno::findOrFail($id);
@@ -792,6 +895,10 @@ class TurnoController extends Controller
         return redirect()->route('admin.turnos.index')->with('success', '¡Turno cancelado correctamente!');
     }
 
+    /**
+     * Marca un turno como "completado" una vez atendido el cliente.
+     * Valida que la atención haya comenzado y no supere un plazo máximo de 3 horas posteriores a su finalización.
+     */
     public function completado($id)
     {
         $turno = Turno::findOrFail($id);
@@ -825,6 +932,10 @@ class TurnoController extends Controller
         return redirect()->back()->with('success', $mensaje);
     }
 
+    /**
+     * Registra la inasistencia (No-Show) de un cliente.
+     * Si el turno fue pagado online, incrementa el contador de ausencias del cliente y aplica penalización por 15 días al llegar a 3 faltas.
+     */
     public function ausente($id)
     {
         $turno = Turno::findOrFail($id);
@@ -839,11 +950,13 @@ class TurnoController extends Controller
             'estado' => 'ausente'
         ]);
 
+        // Contabilidad de faltas y sanción automática
         if ($turno->esPagoOnline() && $turno->cliente_id) {
             $cliente = $turno->cliente;
             if ($cliente) {
                 $cliente->increment('ausencias_online_count');
 
+                // Si llega a 3 ausencias online acumuladas, se lo suspende por 15 días
                 if ($cliente->ausencias_online_count >= 3) {
                     $cliente->update([
                         'penalizado_hasta' => now()->addDays(15),
@@ -856,6 +969,9 @@ class TurnoController extends Controller
         return redirect()->back()->with('success', 'El turno fue marcado como ausente (No-Show) y se actualizó el registro de faltas del cliente.');
     }
 
+    /**
+     * Devuelve la lista o catálogo de servicios agrupados por su tipo/categoría para la vista pública de selección.
+     */
     public function catalogoServicios(Request $request)
     {
         $tipoId = $request->input('tipo');
@@ -876,6 +992,10 @@ class TurnoController extends Controller
         return view('usuario.turnos.catalogo', compact('serviciosAgrupados', 'tipoId'));
     }
 
+    /**
+     * Cancela un turno por razones de emergencia / fuerza mayor (ej. ausencia imprevista de un barbero).
+     * Requiere ingresar un motivo explícito, realiza el reembolso total por Mercado Pago si aplica y guarda el registro de auditoría.
+     */
     public function cancelarEmergencia(Request $request, $id)
     {
         $request->validate([
@@ -893,6 +1013,7 @@ class TurnoController extends Controller
         $pago = Pago::where('turno_id', $turno->id)->where('estado', 'pagado')->first();
         $mensajeExito = 'Turno cancelado por emergencia correctamente.';
 
+        // Si el turno fue abonado online vía Mercado Pago, se ejecuta el reembolso completo
         if ($pago && $pago->payment_id_mp) {
             $accessToken = config('services.mercadopago.access_token');
 
@@ -920,6 +1041,7 @@ class TurnoController extends Controller
             }
         }
 
+        // Guarda el motivo explícito de la cancelación de emergencia
         $turno->update([
             'estado' => 'cancelado',
             'motivo_cancelacion_emergencia' => $request->motivo_cancelacion_emergencia,
@@ -928,15 +1050,98 @@ class TurnoController extends Controller
         return redirect()->route('admin.turnos.index')->with('success', $mensajeExito);
     }
 
-public function procesarInasistenciaAdmin(Request $request, AbsenceManagerService $absenceService)
-{
-    $request->validate([
-        'turnos' => 'required|array',
-    ]);
+    /**
+     * Procesa la ausencia imprevista de un barbero delegando en el servicio AbsenceManagerService 
+     * la reasignación de turnos o aviso a los clientes afectados mediante su protocolo de rescate.
+     */
+    public function procesarInasistenciaAdmin(Request $request, AbsenceManagerService $absenceService)
+    {
+        $request->validate([
+            'turnos' => 'required|array',
+        ]);
 
-    // Delegamos toda la lógica de los 4 niveles de rescate al servicio
-    $absenceService->procesarInasistenciaBarbero($request->input('turnos', []));
+        // Delegamos toda la lógica de los niveles de rescate al servicio de arquitectura
+        $absenceService->procesarInasistenciaBarbero($request->input('turnos', []));
 
-    return redirect()->back()->with('success', 'Inasistencias procesadas correctamente bajo el protocolo de rescate.');
-}
+        return redirect()->back()->with('success', 'Inasistencias procesadas correctamente bajo el protocolo de rescate.');
+    }
+
+    /**
+     * Sugiere automáticamente un barbero disponible que tenga hueco libre inmediato para la sucursal, fecha y duración requeridas.
+     */
+    public function getBarberoSugerido(Request $request)
+    {
+        $sucursalId = $request->query('sucursal_id');
+        $fecha = $request->query('fecha', now()->toDateString());
+        $duracionTotal = (int) $request->query('duracion_total', 30);
+
+        if (!$sucursalId) {
+            return response()->json(['error' => 'Falta sucursal'], 400);
+        }
+
+        // Obtener barberos válidos de la sucursal
+        $barberos = Usuario::with('turnoTrabajo')
+            ->where('sucursal_id', $sucursalId)
+            ->whereIn('rol_id', [1, 2])
+            ->where('activo', 1)
+            ->get()
+            ->filter(fn($b) => isset($b->turnoTrabajo) && !empty($b->turnoTrabajo->hora_inicio));
+
+        $ahora = Carbon::now();
+        $esHoy = Carbon::parse($fecha)->isToday();
+
+        foreach ($barberos as $barbero) {
+            $hInicio = Carbon::parse($fecha . ' ' . $barbero->turnoTrabajo->hora_inicio);
+            $hFin = Carbon::parse($fecha . ' ' . $barbero->turnoTrabajo->hora_fin);
+
+            // Si es hoy y el turno del barbero ya terminó, lo saltamos
+            if ($esHoy && $hFin->lte($ahora)) {
+                continue;
+            }
+
+            // Buscar turnos ocupados de este barbero en la fecha
+            $turnosOcupados = Turno::with(['servicio', 'servicios'])
+                ->where('barbero_id', $barbero->id)
+                ->where('sucursal_id', $sucursalId)
+                ->where('fecha', $fecha)
+                ->where('estado', 'confirmado')
+                ->get();
+
+            $slotActual = $hInicio->copy();
+
+            while ($slotActual->copy()->addMinutes($duracionTotal)->lte($hFin)) {
+                $finSlot = $slotActual->copy()->addMinutes($duracionTotal);
+
+                // Validamos que el slot sea al menos 30 min superior a la hora actual si es el mismo día
+                if ($esHoy && $slotActual->copy()->lt($ahora->copy()->addMinutes(30))) {
+                    $slotActual->addMinutes(15);
+                    continue;
+                }
+
+                $hayConflicto = false;
+                foreach ($turnosOcupados as $t) {
+                    $inicioExistente = Carbon::parse($t->fecha . ' ' . $t->hora);
+                    $duracionExistente = $t->servicios->isNotEmpty() ? $t->servicios->sum('duracion') : ($t->servicio->duracion ?? 30);
+                    $finExistente = $inicioExistente->copy()->addMinutes($duracionExistente);
+
+                    if ($slotActual < $finExistente && $finSlot > $inicioExistente) {
+                        $hayConflicto = true;
+                        break;
+                    }
+                }
+
+                // Si encontramos un hueco libre, lo retornamos en la respuesta
+                if (!$hayConflicto) {
+                    return response()->json([
+                        'barbero_id' => $barbero->id,
+                        'hora' => $slotActual->format('H:i')
+                    ]);
+                }
+
+                $slotActual->addMinutes(15);
+            }
+        }
+
+        return response()->json(['barbero_id' => null, 'hora' => null]);
+    }
 }

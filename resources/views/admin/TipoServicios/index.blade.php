@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid py-4" style="background-color: #f4f7f6; min-height: 100vh;">
+<div class="container-fluid py-4 px-3 px-md-4" style="background-color: #f4f7f6; min-height: 100vh;">
     
     <!-- Encabezado de la Sección -->
     <div class="d-flex align-items-center mb-4 pb-3 border-bottom animate-fade-in">
         <div class="d-flex align-items-center gap-3">
-            <span class="p-2 text-white rounded-3 shadow-sm brand-icon-container" style="background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%);">
+            <span class="p-2 text-white rounded-3 shadow-sm brand-icon-container btn-no-select" style="background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%);">
                 <img src="{{ asset('logos/cortebarba2.png') }}" alt="Logo" class="logo-header-inline">
             </span>
             <div>
@@ -17,7 +17,7 @@
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success border-0 shadow-sm rounded-3 mb-4 d-flex align-items-center animate-fade-in" role="alert" style="background-color: #d1fae5; color: #065f46;">
+        <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center animate-fade-in" role="alert" style="background-color: #E8F5F3; color: #0F746E;">
             <i class="bi bi-check-circle-fill fs-5 me-2"></i>
             <div><span>{{ session('success') }}</span></div>
             <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -25,7 +25,7 @@
     @endif
 
     @if ($errors->any())
-        <div class="alert alert-danger border-0 shadow-sm rounded-3 mb-4 animate-fade-in" role="alert" style="background-color: #fef2f2; color: #991b1b;">
+        <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4 animate-fade-in" role="alert" style="background-color: #fef2f2; color: #991b1b;">
             <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
             <span class="fw-bold small">Por favor corrige los siguientes errores:</span>
             <ul class="mb-0 ps-3 small mt-1">
@@ -36,53 +36,58 @@
         </div>
     @endif
 
-    <div class="row g-4">
-        <!-- COLUMNA IZQUIERDA: Listado de Tipos de Servicio -->
-        <div class="col-lg-7 col-xl-8">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden card-modern">
+    <!-- DISTRIBUCIÓN FLUIDA: Tabla a la IZQUIERDA (col-lg-8) y Formulario Compacto a la DERECHA (col-lg-4) -->
+    <div class="row g-3 align-items-start">
+        
+        <!-- COLUMNA IZQUIERDA: Listado (Tabla Desktop y Tarjetas Móvil) -->
+        <div class="col-12 col-lg-8 col-xl-9">
+            
+            <!-- ================= VISTA DESKTOP (TABLA FLUIDA SIN DESBORDES) ================= -->
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden card-modern bg-white d-none d-md-block mb-4">
                 <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between">
                     <h6 class="text-uppercase text-dark fw-bold mb-0" style="font-size: 0.8rem; letter-spacing: 0.5px;">Listado Registrado</h6>
-                    <span class="badge bg-teal-soft text-teal px-2.5 py-1 rounded-pill" style="font-size: 0.75rem;">{{ count($tipos) }} Total</span>
+                    <span class="badge bg-teal-soft text-teal px-2.5 py-1 rounded-pill btn-no-select" style="font-size: 0.75rem;">{{ count($tipos) }} Total</span>
                 </div>
                 <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light text-uppercase font-weight-bold text-muted border-bottom" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                    <!-- Eliminamos el desborde forzado permitiendo que la tabla use el 100% fluido -->
+                    <div class="table-responsive w-100" style="max-height: 550px; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0 w-100" style="table-layout: fixed;">
+                            <thead class="bg-light text-uppercase font-weight-bold text-muted border-bottom sticky-top shadow-xs" style="font-size: 0.7rem; letter-spacing: 0.5px; z-index: 5; background-color: #f8f9fa !important;">
                                 <tr>
-                                    <th class="py-3 ps-4">Nombre / Descripción</th>
-                                    <th class="py-3">Sucursal</th>
-                                    <th class="py-3 text-center">Estado</th>
-                                    <th class="py-3 text-end pe-4">Acciones</th>
+                                    <th class="py-3 ps-4 bg-light" style="width: 42%;">Nombre / Descripción</th>
+                                    <th class="py-3 bg-light" style="width: 25%;">Sucursal</th>
+                                    <th class="py-3 text-center bg-light" style="width: 15%;">Estado</th>
+                                    <th class="py-3 text-end pe-4 bg-light" style="width: 18%;">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($tipos as $tipo)
                                     <tr class="transition-row">
-                                        <td class="ps-4 py-3">
-                                            <span class="fw-bold text-dark d-block">{{ $tipo->nombre }}</span>
+                                        <td class="ps-4 py-3 text-truncate">
+                                            <span class="fw-bold text-dark d-block text-truncate">{{ $tipo->nombre }}</span>
                                             @if($tipo->descripcion)
-                                                <span class="text-muted small text-truncate d-inline-block" style="max-width: 220px;">{{ $tipo->descripcion }}</span>
+                                                <span class="text-muted small text-truncate d-block" style="max-width: 100%;">{{ $tipo->descripcion }}</span>
                                             @else
                                                 <span class="text-muted small fst-italic">Sin descripción</span>
                                             @endif
                                         </td>
-                                        <td class="py-3">
-                                            <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 0.75rem;">
+                                        <td class="py-3 text-truncate">
+                                            <span class="badge bg-light text-secondary border px-2 py-1 btn-no-select text-truncate mw-100" style="font-size: 0.75rem;">
                                                 <i class="bi bi-shop me-1 text-teal"></i> {{ $tipo->sucursal ? $tipo->sucursal->nombre : 'Sin asignar' }}
                                             </span>
                                         </td>
                                         <td class="text-center py-3">
                                             @if($tipo->activo)
-                                                <span class="badge bg-success text-white px-2.5 py-1 rounded-pill" style="font-size: 0.68rem;">Activo</span>
+                                                <span class="badge bg-success text-white px-2.5 py-1 rounded-pill btn-no-select" style="font-size: 0.68rem;">Activo</span>
                                             @else
-                                                <span class="badge bg-secondary text-white px-2.5 py-1 rounded-pill" style="font-size: 0.68rem;">Inactivo</span>
+                                                <span class="badge bg-secondary text-white px-2.5 py-1 rounded-pill btn-no-select" style="font-size: 0.68rem;">Inactivo</span>
                                             @endif
                                         </td>
                                         <td class="text-end pe-4 py-3">
                                             <div class="d-flex justify-content-end align-items-center gap-2">
-                                                <!-- Botón para Editar In-Situ (Dispara JS) -->
+                                                <!-- Botón para Editar In-Situ -->
                                                 <button type="button" 
-                                                        class="btn-action btn-action-info btn-editar" 
+                                                        class="btn-action btn-action-info btn-editar btn-no-select" 
                                                         title="Editar"
                                                         data-id="{{ $tipo->id }}"
                                                         data-nombre="{{ $tipo->nombre }}"
@@ -93,19 +98,23 @@
                                                 </button>
 
                                                 @if($tipo->activo)
-                                                    <form action="{{ route('admin.TipoServicios.destroy', $tipo->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Seguro que deseas desactivar este tipo de servicio?');">
+                                                    <form action="{{ route('admin.TipoServicios.destroy', $tipo->id) }}" method="POST" class="d-inline form-action-prevent" onsubmit="return confirm('¿Seguro que deseas desactivar este tipo de servicio?');">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="btn-action btn-action-danger" title="Desactivar">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/></svg>
+                                                        <button type="submit" class="btn-action btn-action-danger btn-with-scissors btn-no-select" title="Desactivar">
+                                                            <span class="btn-text">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/></svg>
+                                                            </span>
                                                         </button>
                                                     </form>
                                                 @else
-                                                    <form action="{{ route('admin.TipoServicios.activate', $tipo->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Seguro que deseas activar este tipo de servicio?');">
+                                                    <form action="{{ route('admin.TipoServicios.activate', $tipo->id) }}" method="POST" class="d-inline form-action-prevent" onsubmit="return confirm('¿Seguro que deseas activar este tipo de servicio?');">
                                                         @csrf
                                                         @method('PATCH')
-                                                        <button type="submit" class="btn-action btn-action-success" title="Activar">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/></svg>
+                                                        <button type="submit" class="btn-action btn-action-success btn-with-scissors btn-no-select" title="Activar">
+                                                            <span class="btn-text">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/></svg>
+                                                            </span>
                                                         </button>
                                                     </form>
                                                 @endif
@@ -118,7 +127,7 @@
                                             <div class="py-3">
                                                 <span class="fs-2 d-block mb-2">📋</span>
                                                 <h6 class="fw-semibold text-dark">No hay tipos de servicio registrados</h6>
-                                                <p class="small mb-0">Utiliza el formulario de la derecha para registrar el primero.</p>
+                                                <p class="small mb-0">Utiliza el formulario lateral para registrar el primero.</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -128,57 +137,126 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ================= VISTA MÓVIL (TARJETAS TÁCTILES) ================= -->
+            <div class="d-block d-md-none">
+                <div class="d-flex align-items-center justify-content-between mb-3 px-1">
+                    <span class="text-uppercase text-secondary fw-bold small" style="letter-spacing: 0.5px;">Listado Registrado</span>
+                    <span class="badge bg-teal-soft text-teal px-2 py-0.5 rounded-pill btn-no-select" style="font-size: 0.7rem;">{{ count($tipos) }} Total</span>
+                </div>
+                <div class="row g-3">
+                    @forelse($tipos as $tipo)
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white card-modern">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1">{{ $tipo->nombre }}</h6>
+                                        @if($tipo->descripcion)
+                                            <p class="text-muted small mb-1">{{ $tipo->descripcion }}</p>
+                                        @else
+                                            <p class="text-muted small fst-italic mb-1">Sin descripción</p>
+                                        @endif
+                                    </div>
+                                    <span class="badge bg-{{ $tipo->activo ? 'success' : 'secondary' }} text-white px-2 py-0.5 rounded-pill btn-no-select" style="font-size: 0.65rem;">
+                                        {{ $tipo->activo ? 'Activo' : 'Inactivo' }}
+                                    </span>
+                                </div>
+
+                                <div class="mb-3 small text-secondary">
+                                    <span class="badge bg-light text-secondary border px-2 py-1 btn-no-select" style="font-size: 0.7rem;">
+                                        <i class="bi bi-shop me-1 text-teal"></i> {{ $tipo->sucursal ? $tipo->sucursal->nombre : 'Sin asignar' }}
+                                    </span>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2 border-top pt-2">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-info rounded-pill px-3 fw-bold btn-editar btn-no-select" 
+                                            style="font-size: 0.75rem;"
+                                            data-id="{{ $tipo->id }}"
+                                            data-nombre="{{ $tipo->nombre }}"
+                                            data-descripcion="{{ $tipo->descripcion }}"
+                                            data-sucursal="{{ $tipo->sucursal_id }}"
+                                            data-url="{{ route('admin.TipoServicios.update', $tipo->id) }}">
+                                        Editar
+                                    </button>
+
+                                    @if($tipo->activo)
+                                        <form action="{{ route('admin.TipoServicios.destroy', $tipo->id) }}" method="POST" class="d-inline form-action-prevent" onsubmit="return confirm('¿Desactivar?');">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold btn-with-scissors btn-no-select" style="font-size: 0.75rem;"><span class="btn-text">Desactivar</span></button>
+                                        </form>
+                                    @else
+                                        <form action="{{ route('admin.TipoServicios.activate', $tipo->id) }}" method="POST" class="d-inline form-action-prevent" onsubmit="return confirm('¿Activar?');">
+                                            @csrf @method('PATCH')
+                                            <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold btn-with-scissors btn-no-select" style="font-size: 0.75rem;"><span class="btn-text">Activar</span></button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="col-12 text-center py-4 text-muted bg-white rounded-4 shadow-sm">
+                            <span class="fs-2 d-block mb-2">📋</span>
+                            <p class="small mb-0">No hay tipos de servicio registrados.</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
         </div>
 
-        <!-- COLUMNA DERECHA: Formulario Dinámico (Crear / Editar) -->
-        <div class="col-lg-5 col-xl-4">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden card-modern sticky-top" style="top: 85px;">
-                <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between">
-                    <h6 id="form-title" class="text-uppercase text-dark fw-bold mb-0 d-flex align-items-center gap-2" style="font-size: 0.8rem; letter-spacing: 0.5px;">
-                        <i class="bi bi-plus-circle text-teal" id="form-icon"></i> <span id="form-title-text">Nuevo Tipo de Servicio</span>
+        <!-- COLUMNA DERECHA: Formulario Dinámico Ultra Compacto -->
+        <div class="col-12 col-lg-4 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden card-modern bg-white sticky-top" style="top: 20px; z-index: 10;">
+                <div class="card-header bg-white py-3 px-3 border-bottom d-flex align-items-center justify-content-between">
+                    <h6 id="form-title" class="text-uppercase text-dark fw-bold mb-0 d-flex align-items-center gap-2" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                        <i class="bi bi-plus-circle text-teal fs-6" id="form-icon"></i> <span id="form-title-text">Nuevo Tipo</span>
                     </h6>
-                    <!-- Botón para cancelar edición y volver a modo creación -->
-                    <button type="button" id="btn-cancel-edit" class="btn btn-sm btn-outline-secondary d-none px-2 py-0" style="font-size: 0.75rem;" title="Cancelar edición">Cancelar</button>
+                    <!-- Botón para cancelar edición -->
+                    <button type="button" id="btn-cancel-edit" class="btn btn-sm btn-outline-secondary d-none px-2 py-0.5 rounded-pill btn-no-select" style="font-size: 0.65rem;" title="Cancelar edición">Cancelar</button>
                 </div>
-                <div class="card-body p-4 bg-white">
-                    <form action="{{ route('admin.TipoServicios.store') }}" method="POST" id="formTipoServicio" novalidate>
+                <div class="card-body p-3 bg-white">
+                    <form action="{{ route('admin.TipoServicios.store') }}" method="POST" id="formTipoServicio" class="form-action-prevent" novalidate>
                         @csrf
-                        <div id="method-container"></div> <!-- Aquí se inyectará @method('PUT') mediante JS al editar -->
+                        <div id="method-container"></div>
 
-                        <div class="mb-3">
-                            <label for="nombre" class="form-label fw-semibold text-secondary small">NOMBRE <span class="text-danger">*</span></label>
-                            <input type="text" name="nombre" id="nombre" value="{{ old('nombre') }}" class="form-control border bg-light py-2" placeholder="Ej: Cortes Clásicos" required autocomplete="off">
-                            <div class="invalid-feedback">El nombre del tipo de servicio solo debe contener letras y espacios.</div>
-                        </div>
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <label for="nombre" class="form-label fw-semibold text-secondary small mb-1" style="font-size: 0.72rem;">NOMBRE <span class="text-danger">*</span></label>
+                                <input type="text" name="nombre" id="nombre" value="{{ old('nombre') }}" class="form-control form-control-sm border bg-light py-1.5 rounded-3 shadow-none fs-6" placeholder="Ej: Cortes Clásicos" required autocomplete="off">
+                                <div class="invalid-feedback">El nombre solo debe contener letras y espacios.</div>
+                            </div>
 
-                        <div class="mb-3">
-                            <label for="descripcion" class="form-label fw-semibold text-secondary small">DESCRIPCIÓN</label>
-                            <textarea name="descripcion" id="descripcion" rows="2" class="form-control border bg-light" placeholder="Breve detalle opcional..." autocomplete="off">{{ old('descripcion') }}</textarea>
-                            <div class="invalid-feedback">La descripción solo debe contener letras y espacios.</div>
-                        </div>
+                            <div class="col-12">
+                                <label for="sucursal_id" class="form-label fw-semibold text-secondary small mb-1" style="font-size: 0.72rem;">SUCURSAL <span class="text-danger">*</span></label>
+                                <select name="sucursal_id" id="sucursal_id" class="form-select form-select-sm border bg-light py-1.5 rounded-3 shadow-none fs-6" required>
+                                    <option value="">Selecciona una sucursal...</option>
+                                    @foreach(\App\Models\Sucursal::all() as $sucursal)
+                                        <option value="{{ $sucursal->id }}" {{ old('sucursal_id') == $sucursal->id ? 'selected' : '' }}>
+                                            {{ $sucursal->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <div class="invalid-feedback">Selecciona una sucursal válida.</div>
+                            </div>
 
-                        <div class="mb-4">
-                            <label for="sucursal_id" class="form-label fw-semibold text-secondary small">SUCURSAL <span class="text-danger">*</span></label>
-                            <select name="sucursal_id" id="sucursal_id" class="form-select border bg-light py-2" required>
-                                <option value="">Selecciona una sucursal...</option>
-                                @foreach(\App\Models\Sucursal::all() as $sucursal)
-                                    <option value="{{ $sucursal->id }}" {{ old('sucursal_id') == $sucursal->id ? 'selected' : '' }}>
-                                        {{ $sucursal->nombre }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <div class="invalid-feedback">Selecciona una sucursal válida.</div>
-                        </div>
+                            <div class="col-12">
+                                <label for="descripcion" class="form-label fw-semibold text-secondary small mb-1" style="font-size: 0.72rem;">DESCRIPCIÓN</label>
+                                <input type="text" name="descripcion" id="descripcion" class="form-control form-control-sm border bg-light py-1.5 rounded-3 shadow-none fs-6" placeholder="Breve detalle opcional..." value="{{ old('descripcion') }}" autocomplete="off">
+                                <div class="invalid-feedback">La descripción solo debe contener letras y espacios.</div>
+                            </div>
 
-                        <div class="d-grid">
-                            <button type="submit" id="btn-submit" class="btn py-2.5 fw-semibold shadow-sm btn-video-glow rounded-pill text-white" style="background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%); border: none;">
-                                <i class="bi bi-check-lg me-1"></i> <span id="btn-text">Registrar Tipo</span>
-                            </button>
+                            <div class="col-12 d-flex justify-content-end mt-2">
+                                <button type="submit" id="btn-submit" class="btn w-100 py-2 fw-semibold shadow-sm btn-video-glow rounded-pill text-white btn-with-scissors btn-no-select" style="background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%); border: none; font-size: 0.82rem;">
+                                    <span class="btn-text"><i class="bi bi-check-lg me-1"></i> <span id="btn-text-content">Registrar Tipo</span></span>
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 
@@ -268,6 +346,21 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 10px rgba(25, 135, 84, 0.3);
     }
+    .btn-no-select {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+    /* Spinner de Tijeras Animadas */
+    .scissors-loader {
+        display: inline-block;
+        animation: scissorsSpin 0.9s linear infinite;
+    }
+    @keyframes scissorsSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
     .form-control:focus, .form-select:focus {
         border-color: #0d9488 !important;
         box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1) !important;
@@ -295,11 +388,39 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
+    // Prevenir selección de texto accidental en botones
+    document.querySelectorAll('.btn-no-select').forEach(btn => {
+        btn.addEventListener('mousedown', function (e) {
+            if (e.detail > 1) e.preventDefault();
+        });
+    });
+
+    // SISTEMA ANTI-DOBLE CLIC Y SPINNER DE TIJERAS INTELIGENTE (Retraso de 250ms)
+    document.addEventListener('submit', function (e) {
+        const form = e.target;
+        if (form.classList.contains('form-action-prevent')) {
+            const submitBtn = form.querySelector('.btn-with-scissors');
+            if (submitBtn && !submitBtn.disabled) {
+                submitBtn.disabled = true;
+                const textSpan = submitBtn.querySelector('.btn-text');
+                if (textSpan) {
+                    textSpan.dataset.original = textSpan.innerHTML;
+                    
+                    let spinnerTimer = setTimeout(() => {
+                        textSpan.innerHTML = `<i class="bi bi-scissors scissors-loader me-1"></i> Procesando...`;
+                    }, 250);
+
+                    window.addEventListener('beforeunload', () => clearTimeout(spinnerTimer));
+                }
+            }
+        }
+    });
+
     // Lógica dinámica para cambiar el formulario entre Crear y Editar
     const form = document.getElementById('formTipoServicio');
     const formTitleText = document.getElementById('form-title-text');
     const formIcon = document.getElementById('form-icon');
-    const btnText = document.getElementById('btn-text');
+    const btnTextContent = document.getElementById('btn-text-content');
     const btnCancelEdit = document.getElementById('btn-cancel-edit');
     const methodContainer = document.getElementById('method-container');
 
@@ -339,7 +460,7 @@ document.addEventListener("DOMContentLoaded", function() {
     blindarSoloLetras(inputNombre);
     blindarSoloLetras(inputDescripcion);
 
-    // Manejar clic en botones de editar de la tabla
+    // Manejar clic en botones de editar (Scroll automático suave al formulario derecho)
     document.querySelectorAll('.btn-editar').forEach(button => {
         button.addEventListener('click', function() {
             const updateUrl = this.getAttribute('data-url');
@@ -356,14 +477,17 @@ document.addEventListener("DOMContentLoaded", function() {
             inputDescripcion.value = descripcion !== 'null' ? descripcion : '';
             selectSucursal.value = sucursal;
 
-            // Cambiar textos y estilos del panel lateral
-            formTitleText.textContent = "Editar Tipo de Servicio";
-            formIcon.className = "bi bi-pencil-square text-warning";
-            btnText.textContent = "Actualizar Tipo";
+            // Cambiar textos y estilos del panel derecho
+            formTitleText.textContent = "Editar Tipo";
+            formIcon.className = "bi bi-pencil-square text-warning fs-6";
+            btnTextContent.textContent = "Actualizar Tipo";
             btnCancelEdit.classList.remove('d-none');
 
-            // Efecto visual sutil en la tarjeta del formulario
+            // Bordes destacados visuales
             form.closest('.card').classList.add('border', 'border-warning');
+
+            // Scroll suave hacia el formulario en la parte derecha/superior
+            form.closest('.card').scrollIntoView({ behavior: 'smooth' });
         });
     });
 
@@ -377,9 +501,9 @@ document.addEventListener("DOMContentLoaded", function() {
             inputDescripcion.value = '';
             selectSucursal.value = '';
 
-            formTitleText.textContent = "Nuevo Tipo de Servicio";
-            formIcon.className = "bi bi-plus-circle text-teal";
-            btnText.textContent = "Registrar Tipo";
+            formTitleText.textContent = "Nuevo Tipo";
+            formIcon.className = "bi bi-plus-circle text-teal fs-6";
+            btnTextContent.textContent = "Registrar Tipo";
             btnCancelEdit.classList.add('d-none');
 
             form.closest('.card').classList.remove('border', 'border-warning');
@@ -400,7 +524,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 inputNombre.classList.add('is-valid');
             }
 
-            // Validar descripción solo si contiene texto
             if (inputDescripcion.value.trim() && !regexLetras.test(inputDescripcion.value.trim())) {
                 inputDescripcion.classList.add('is-invalid');
                 valido = false;

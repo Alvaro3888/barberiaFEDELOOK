@@ -119,6 +119,8 @@ document.addEventListener("DOMContentLoaded", function() {
     const formTurno         = document.getElementById('formTurno');
 
     let cacheBarberosSucursal = [];
+
+    // Solo mantenemos los servicios elegidos en memoria si viene del catálogo
     let serviciosElegidos = JSON.parse(localStorage.getItem('form_servicios') || '[]');
 
     let hoyStr = new Date().toISOString().split('T')[0];
@@ -126,36 +128,60 @@ document.addEventListener("DOMContentLoaded", function() {
         fechaInput.min = hoyStr;
     }
 
-    function restaurarEstadoFormulario() {
-        const savedSucursal = localStorage.getItem('form_sucursal_id');
-        const savedFecha = localStorage.getItem('form_fecha');
-        const savedBarberoId = localStorage.getItem('form_barbero_id');
-        const savedHora = localStorage.getItem('form_hora');
+    function inicializarSmartMatch() {
+        if (!sucursalSel || sucursalSel.options.length <= 1) return;
 
-        if (savedSucursal && sucursalSel) {
-            sucursalSel.value = savedSucursal;
-            
-            fetch('/barberos/' + savedSucursal)
-                .then(response => response.json())
-                .then(data => {
-                    cacheBarberosSucursal = data || [];
-                    
-                    if (cacheBarberosSucursal.length > 0) {
-                        renderizarBarberos(savedBarberoId);
-                    }
+        // 🚀 Forzamos a elegir la sucursal principal por defecto (índice 1)
+        sucursalSel.selectedIndex = 1; 
+        let sucursalPrincipalId = sucursalSel.value;
+        localStorage.setItem('form_sucursal_id', sucursalPrincipalId);
 
-                    if (savedBarberoId && savedFecha) {
-                        fechaInput.disabled = false;
-                        fechaInput.value = savedFecha;
-                        inputBarberoId.value = savedBarberoId;
+        fechaInput.value = hoyStr;
+        fechaInput.disabled = false;
+        localStorage.setItem('form_fecha', hoyStr);
 
-                        if (savedHora) {
-                            cargarHorariosDisponibles(savedHora);
+        let duracionTotal = serviciosElegidos.reduce((acc, s) => acc + parseInt(s.duracion || 30), 0);
+        if (duracionTotal === 0) duracionTotal = 30;
+
+        // 1. Cargamos la lista de barberos de la sucursal
+        fetch('/barberos/' + sucursalPrincipalId)
+            .then(response => response.json())
+            .then(data => {
+                cacheBarberosSucursal = data || [];
+
+                // 2. Consultamos al backend la sugerencia inteligente con disponibilidad real actual
+                fetch(`/turnos/barbero-sugerido?sucursal_id=${sucursalPrincipalId}&fecha=${hoyStr}&duracion_total=${duracionTotal}`)
+                    .then(res => res.json())
+                    .then(sugerencia => {
+                        let barberoIdAUsar = sugerencia.barbero_id;
+                        let horaSugerida = sugerencia.hora;
+
+                        if (!barberoIdAUsar && cacheBarberosSucursal.length > 0) {
+                            barberoIdAUsar = cacheBarberosSucursal[0].id;
                         }
-                    }
-                })
-                .catch(() => { cacheBarberosSucursal = []; });
-        }
+
+                        if (barberoIdAUsar) {
+                            renderizarBarberos(barberoIdAUsar);
+                            inputBarberoId.value = barberoIdAUsar;
+                            localStorage.setItem('form_barbero_id', barberoIdAUsar);
+
+                            if (horaSugerida) {
+                                cargarHorariosDisponibles(horaSugerida);
+                            } else {
+                                cargarHorariosDisponibles(null);
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error en sugerencia inteligente:', err);
+                        if (cacheBarberosSucursal.length > 0) {
+                            renderizarBarberos(cacheBarberosSucursal[0].id);
+                            inputBarberoId.value = cacheBarberosSucursal[0].id;
+                            cargarHorariosDisponibles(null);
+                        }
+                    });
+            })
+            .catch(() => { cacheBarberosSucursal = []; });
     }
 
     @if(isset($servicioSeleccionado) && $servicioSeleccionado)
@@ -170,7 +196,11 @@ document.addEventListener("DOMContentLoaded", function() {
     @endif
 
     renderizarServiciosElegidos();
-    restaurarEstadoFormulario();
+    
+    // Limpiamos la caché vieja de barbero/hora al cargar de cero y aplicamos el Smart Match fresco
+    localStorage.removeItem('form_barbero_id');
+    localStorage.removeItem('form_hora');
+    inicializarSmartMatch();
 
     if (sucursalSel) {
         sucursalSel.addEventListener('change', function() {
@@ -283,14 +313,15 @@ document.addEventListener("DOMContentLoaded", function() {
         let fechaVal = fechaInput.value;
         
         let duracionTotal = serviciosElegidos.reduce((acc, s) => acc + parseInt(s.duracion || 30), 0);
+        if (duracionTotal === 0) duracionTotal = 30;
 
         horaInput.innerHTML = '<option value="">Calculando horarios disponibles...</option>';
         horaInput.disabled = true;
         btnConfirmar.disabled = true;
         if (barberoAgenda) barberoAgenda.classList.add('d-none');
 
-        if (!barberoId || !sucursalId || !fechaVal || serviciosElegidos.length === 0) {
-            horaInput.innerHTML = '<option value="">Faltan datos (servicios, fecha o barbero)</option>';
+        if (!barberoId || !sucursalId || !fechaVal) {
+            horaInput.innerHTML = '<option value="">Faltan datos (fecha o barbero)</option>';
             return;
         }
 
@@ -299,30 +330,28 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(slots => {
                 horaInput.innerHTML = '<option value="">Seleccioná un horario</option>';
                 if (slots.length > 0) {
-                    slots.forEach(slot => {
+                    slots.forEach((slot, index) => {
                         let opt = document.createElement('option');
                         opt.value = slot.hora;
                         opt.textContent = slot.formato;
-                        if (horaARestaurar && slot.hora === horaARestaurar) {
+                        
+                        if ((horaARestaurar && slot.hora === horaARestaurar) || (!horaARestaurar && index === 0)) {
                             opt.selected = true;
+                            localStorage.setItem('form_hora', slot.hora);
                         }
                         horaInput.appendChild(opt);
                     });
                     horaInput.disabled = false;
-
-                    if (horaARestaurar) {
-                        localStorage.setItem('form_hora', horaARestaurar);
-                        validarBotonConfirmar();
-                    }
+                    validarBotonConfirmar();
 
                     barberoAgenda.className = "alert alert-success py-2 px-3 mt-2 mb-0 small fw-medium border-success text-dark";
-                    barberoAgenda.innerHTML = `✅ Agenda disponible. Duración total del servicio: <strong>${duracionTotal} min</strong>.`;
+                    barberoAgenda.innerHTML = `✅ Sugerencia inteligente aplicada: Primer horario disponible seleccionado.`;
                     barberoAgenda.classList.remove('d-none');
                 } else {
                     horaInput.innerHTML = '<option value="">No hay horarios libres para esta duración</option>';
                     horaInput.disabled = true;
                     barberoAgenda.className = "alert alert-danger py-2 px-3 mt-2 mb-0 small fw-medium border-danger text-dark";
-                    barberoAgenda.innerHTML = `⚠️ El profesional no tiene espacio libre suficiente para los ${duracionTotal} min requeridos en esta fecha.`;
+                    barberoAgenda.innerHTML = `⚠️ El profesional seleccionado no tiene espacio libre suficiente para los ${duracionTotal} min requeridos en esta fecha. Probá seleccionando otro barbero.`;
                     barberoAgenda.classList.remove('d-none');
                 }
             })
@@ -428,6 +457,7 @@ document.addEventListener("DOMContentLoaded", function() {
             localStorage.removeItem('form_fecha');
             localStorage.removeItem('form_hora');
             localStorage.removeItem('form_barbero_id');
+            localStorage.removeItem('form_timestamp');
         });
     }
 

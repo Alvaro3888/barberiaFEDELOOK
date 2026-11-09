@@ -1,20 +1,20 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid py-5" style="background-color: #f4f7f6; min-height: 100vh;">
+<div class="container-fluid py-4 py-md-5 px-lg-4" style="background-color: #f4f7f6; min-height: 100vh;">
     <!-- Encabezado con Animación -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 pb-3 border-bottom animate-fade-in">
-        <div class="mb-3 mb-md-0">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom animate-fade-in gap-3">
+        <div>
             <h1 class="h3 font-weight-bold text-dark mb-1 d-flex align-items-center gap-2">
-                <span class="p-2 text-white rounded-3 shadow-sm brand-icon-container" style="background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%);">
+                <span class="p-2 text-white rounded-3 shadow-sm brand-icon-container btn-no-select" style="background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%);">
                     <!-- Logo corregido y con proporciones exactas -->
                     <img src="{{ asset('logos/cortebarba2.png') }}" alt="Logo Sucursales" class="logo-header-inline">
                 </span>
                 Listado de Sucursales
             </h1>
-            <p class="text-muted mb-0">Gestiona la información, ubicación e imágenes de todas las sucursales.</p>
+            <p class="text-muted mb-0 small">Gestiona la información, ubicación e imágenes de todas las sucursales.</p>
         </div>
-        <a href="{{ route('admin.sucursales.create') }}" class="btn px-4 py-2 font-weight-bold shadow-sm d-inline-flex align-items-center gap-2 btn-video-glow rounded-3 text-white" style="background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%); border: none;">
+        <a href="{{ route('admin.sucursales.create') }}" class="btn px-4 py-2 font-weight-bold shadow-sm d-inline-flex align-items-center justify-content-center gap-2 btn-video-glow rounded-3 text-white text-nowrap btn-no-select transition-all" style="background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%); border: none;">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
             </svg>
@@ -23,7 +23,7 @@
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success border-0 shadow-sm mb-4 rounded-4 alert-dismissible fade show" role="alert" style="background-color: #d1fae5; color: #065f46;">
+        <div class="alert alert-success border-0 shadow-sm mb-4 rounded-4 alert-dismissible fade show" role="alert" style="background-color: #E8F5F3; color: #0F746E;">
             <div class="d-flex align-items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
@@ -35,38 +35,38 @@
     @endif
 
     <!-- Tarjeta de Filtros de Búsqueda Estilizada -->
-    <div class="card border-0 shadow-sm p-4 mb-4 rounded-4 bg-white">
+    <div class="card border-0 shadow-sm p-3 p-md-4 mb-4 rounded-4 bg-white card-modern">
         <form action="{{ route('admin.sucursales.index') }}" method="GET" class="row g-3 align-items-end" id="formFiltroSucursal">
-            <div class="col-md-5">
+            <div class="col-12 col-md-5">
                 <label for="nombre" class="form-label small fw-bold text-uppercase text-muted">Filtrar por Nombre</label>
                 <!-- Input de nombre 100% blindado contra números -->
-                <input type="text" name="nombre" id="nombre" class="form-control form-control-lg border bg-light py-2 fs-6 input-solo-letras" value="{{ request('nombre') }}" placeholder="Ej: Centro, Norte..." autocomplete="off">
+                <input type="text" name="nombre" id="nombre" class="form-control form-control-lg border bg-light py-2 fs-6 input-solo-letras rounded-3 shadow-none" value="{{ request('nombre') }}" placeholder="Ej: Centro, Norte..." autocomplete="off">
             </div>
-            <div class="col-md-5">
+            <div class="col-12 col-md-5">
                 <label for="direccion" class="form-label small fw-bold text-uppercase text-muted">Filtrar por Dirección</label>
-                <input type="text" name="direccion" id="direccion" class="form-control form-control-lg border bg-light py-2 fs-6" value="{{ request('direccion') }}" placeholder="Ej: Av. San Martín...">
+                <input type="text" name="direccion" id="direccion" class="form-control form-control-lg border bg-light py-2 fs-6 rounded-3 shadow-none" value="{{ request('direccion') }}" placeholder="Ej: Av. San Martín...">
             </div>
-            <div class="col-md-2 d-flex gap-2">
-                <button type="submit" class="btn btn-dark btn-lg w-100 py-2 shadow-sm fw-bold fs-6">Buscar</button>
+            <div class="col-12 col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-dark btn-lg w-100 py-2 shadow-sm fw-bold fs-6 rounded-3 btn-no-select transition-all">Buscar</button>
                 @if(request('nombre') || request('direccion'))
-                    <a href="{{ route('admin.sucursales.index') }}" class="btn btn-light btn-lg py-2 border text-secondary font-weight-bold btn-hover-scale px-3" title="Limpiar filtros">✕</a>
+                    <a href="{{ route('admin.sucursales.index') }}" class="btn btn-light btn-lg py-2 border text-secondary font-weight-bold btn-hover-scale px-3 rounded-3 btn-no-select" title="Limpiar filtros">✕</a>
                 @endif
             </div>
         </form>
     </div>
 
-    <!-- Tabla de Sucursales Moderna -->
-    <div class="card shadow-sm border-0 rounded-4 overflow-hidden card-modern">
+    <!-- ================= VISTA DESKTOP (TABLA CON SCROLL INTERNO Y STICKY HEADER) ================= -->
+    <div class="card shadow-sm border-0 rounded-4 overflow-hidden card-modern bg-white d-none d-md-block mb-4">
         <div class="card-body p-0">
-            <div class="table-responsive">
+            <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
                 <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light text-uppercase font-weight-bold text-muted border-bottom" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                    <thead class="bg-light text-uppercase font-weight-bold text-muted border-bottom sticky-top shadow-xs" style="font-size: 0.75rem; letter-spacing: 0.5px; z-index: 5; background-color: #f8f9fa !important;">
                         <tr>
-                            <th class="py-3 ps-4">Imagen</th>
-                            <th class="py-3">Nombre</th>
-                            <th class="py-3">Dirección / Teléfono</th>
-                            <th class="py-3 text-center">Estado</th>
-                            <th class="py-3 text-end pe-4">Acciones</th>
+                            <th class="py-3 ps-4 bg-light">Imagen</th>
+                            <th class="py-3 bg-light">Nombre</th>
+                            <th class="py-3 bg-light">Dirección / Teléfono</th>
+                            <th class="py-3 text-center bg-light">Estado</th>
+                            <th class="py-3 text-end pe-4 bg-light">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -95,32 +95,36 @@
                                 </td>
                                 <td class="text-center py-3">
                                     @if($sucursal->activo)
-                                        <span class="badge bg-success text-white px-2.5 py-1 rounded-pill" style="font-size: 0.7rem;">Activa</span>
+                                        <span class="badge bg-success text-white px-2.5 py-1 rounded-pill btn-no-select" style="font-size: 0.7rem;">Activa</span>
                                     @else
-                                        <span class="badge bg-secondary text-white px-2.5 py-1 rounded-pill" style="font-size: 0.7rem;">Inactiva</span>
+                                        <span class="badge bg-secondary text-white px-2.5 py-1 rounded-pill btn-no-select" style="font-size: 0.7rem;">Inactiva</span>
                                     @endif
                                 </td>
                                 <td class="text-end pe-4 py-3">
                                     <div class="d-flex justify-content-end align-items-center gap-2">
                                         <!-- Editar -->
-                                        <a href="{{ route('admin.sucursales.edit', $sucursal->id) }}" class="btn-action btn-action-info" title="Editar">
+                                        <a href="{{ route('admin.sucursales.edit', $sucursal->id) }}" class="btn-action btn-action-info btn-no-select" title="Editar">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/></svg>
                                         </a>
 
                                         @if($sucursal->activo)
-                                            <form action="{{ route('admin.sucursales.destroy', $sucursal->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Seguro que deseas desactivar esta sucursal?');">
+                                            <form action="{{ route('admin.sucursales.destroy', $sucursal->id) }}" method="POST" class="d-inline form-action-prevent" onsubmit="return confirm('¿Seguro que deseas desactivar esta sucursal?');">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn-action btn-action-danger" title="Desactivar">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/></svg>
+                                                <button type="submit" class="btn-action btn-action-danger btn-with-scissors btn-no-select" title="Desactivar">
+                                                    <span class="btn-text">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/></svg>
+                                                    </span>
                                                 </button>
                                             </form>
                                         @else
-                                            <form action="{{ route('admin.sucursales.activate', $sucursal->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Seguro que deseas activar esta sucursal?');">
+                                            <form action="{{ route('admin.sucursales.activate', $sucursal->id) }}" method="POST" class="d-inline form-action-prevent" onsubmit="return confirm('¿Seguro que deseas activar esta sucursal?');">
                                                 @csrf
                                                 @method('PATCH')
-                                                <button type="submit" class="btn-action btn-action-success" title="Activar">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/></svg>
+                                                <button type="submit" class="btn-action btn-action-success btn-with-scissors btn-no-select" title="Activar">
+                                                    <span class="btn-text">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/></svg>
+                                                    </span>
                                                 </button>
                                             </form>
                                         @endif
@@ -141,6 +145,66 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+
+    <!-- ================= VISTA MÓVIL (TARJETAS TÁCTILES) ================= -->
+    <div class="d-block d-md-none" style="max-height: 520px; overflow-y: auto;">
+        <div class="row g-3">
+            @forelse($sucursales as $sucursal)
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-white card-modern">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="rounded-3 overflow-hidden bg-light border d-flex align-items-center justify-content-center shadow-xs flex-shrink-0" style="width: 50px; height: 50px;">
+                                @if($sucursal->imagen)
+                                    <img src="{{ asset('storage/' . $sucursal->imagen) }}" alt="{{ $sucursal->nombre }}" class="w-100 h-100 object-fit-cover">
+                                @elseif($sucursal->imagen_url)
+                                    <img src="{{ $sucursal->imagen_url }}" alt="{{ $sucursal->nombre }}" class="w-100 h-100 object-fit-cover">
+                                @else
+                                    <span class="fs-5">💈</span>
+                                @endif
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h6 class="fw-bold text-dark mb-1">{{ $sucursal->nombre }}</h6>
+                                    <span class="badge bg-{{ $sucursal->activo ? 'success' : 'secondary' }} text-white px-2 py-0.5 rounded-pill btn-no-select" style="font-size: 0.65rem;">
+                                        {{ $sucursal->activo ? 'Activa' : 'Inactiva' }}
+                                    </span>
+                                </div>
+                                @if($sucursal->horarios)
+                                    <div class="text-muted small">🕒 {{ $sucursal->horarios }}</div>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="mb-3 small text-secondary border-top pt-2">
+                            <div class="mb-1">📍 {{ $sucursal->direccion }}</div>
+                            <div>📞 {{ $sucursal->telefono }}</div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 border-top pt-2">
+                            <a href="{{ route('admin.sucursales.edit', $sucursal->id) }}" class="btn btn-sm btn-outline-info rounded-pill px-3 fw-bold btn-no-select" style="font-size: 0.75rem;">Editar</a>
+
+                            @if($sucursal->activo)
+                                <form action="{{ route('admin.sucursales.destroy', $sucursal->id) }}" method="POST" class="d-inline form-action-prevent" onsubmit="return confirm('¿Desactivar?');">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold btn-with-scissors btn-no-select" style="font-size: 0.75rem;"><span class="btn-text">Desactivar</span></button>
+                                </form>
+                            @else
+                                <form action="{{ route('admin.sucursales.activate', $sucursal->id) }}" method="POST" class="d-inline form-action-prevent" onsubmit="return confirm('¿Activar?');">
+                                    @csrf @method('PATCH')
+                                    <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold btn-with-scissors btn-no-select" style="font-size: 0.75rem;"><span class="btn-text">Activar</span></button>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="col-12 text-center py-4 text-muted">
+                    <span class="fs-1 d-block mb-2">🏢</span>
+                    <p class="mb-0 small">No se encontraron sucursales.</p>
+                </div>
+            @endforelse
         </div>
     </div>
 </div>
@@ -234,6 +298,21 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 10px rgba(25, 135, 84, 0.3);
     }
+    .btn-no-select {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+    /* Spinner de Tijeras Animadas */
+    .scissors-loader {
+        display: inline-block;
+        animation: scissorsSpin 0.9s linear infinite;
+    }
+    @keyframes scissorsSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
     .form-control:focus {
         border-color: #0d9488 !important;
         box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1) !important;
@@ -247,7 +326,7 @@
     }
 </style>
 
-<!-- Script dinámico para el logo y el blindaje estricto del input de nombre -->
+<!-- Script dinámico para el logo, spinner con retardo de 250ms y blindaje estricto -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const brandContainer = document.querySelector('.brand-icon-container');
@@ -261,6 +340,34 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 400);
         });
     }
+
+    // Prevenir selección de texto accidental en botones
+    document.querySelectorAll('.btn-no-select').forEach(btn => {
+        btn.addEventListener('mousedown', function (e) {
+            if (e.detail > 1) e.preventDefault();
+        });
+    });
+
+    // SISTEMA ANTI-DOBLE CLIC Y SPINNER DE TIJERAS INTELIGENTE (Retraso de 250ms)
+    document.addEventListener('submit', function (e) {
+        const form = e.target;
+        if (form.classList.contains('form-action-prevent')) {
+            const submitBtn = form.querySelector('.btn-with-scissors');
+            if (submitBtn && !submitBtn.disabled) {
+                submitBtn.disabled = true;
+                const textSpan = submitBtn.querySelector('.btn-text');
+                if (textSpan) {
+                    textSpan.dataset.original = textSpan.innerHTML;
+                    
+                    let spinnerTimer = setTimeout(() => {
+                        textSpan.innerHTML = `<i class="bi bi-scissors scissors-loader me-1"></i> Procesando...`;
+                    }, 250);
+
+                    window.addEventListener('beforeunload', () => clearTimeout(spinnerTimer));
+                }
+            }
+        }
+    });
 
     // Blindaje estricto 100% para el input de filtro por nombre (Bloqueo de números)
     const inputNombre = document.getElementById('nombre');

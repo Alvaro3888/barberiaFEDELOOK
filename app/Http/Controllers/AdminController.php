@@ -12,16 +12,18 @@ class AdminController extends Controller
 {
     /**
      * Método privado auxiliar para agrupar las métricas comunes del admin.
+     * Calcula ingresos del mes actual diferenciando canales (Web vía Mercado Pago vs Mostrador/Desktop),
+     * total de turnos mensuales, servicio más solicitado y barbero destacado.
      */
     private function obtenerDatosMetricas()
     {
         $ingresosMes = Turno::whereMonth('fecha', now()->month)
             ->where(function($q) {
-                // Web (método mercado_pago): suman siempre que no estén cancelados
+                // Turnos Web (método mercado_pago): suman siempre que no estén cancelados
                 $q->whereHas('pago', function($subQ) {
                     $subQ->where('metodo', 'mercado_pago');
                 })->where('estado', '!=', 'cancelado')
-                // Desktop (método efectivo o sin mercado_pago): suman solo al completarse
+                // Turnos Desktop (método efectivo o sin mercado_pago): suman solo al completarse
                 ->orWhere(function($sub) {
                     $sub->whereHas('pago', function($subQ) {
                         $subQ->where('metodo', '!=', 'mercado_pago');
@@ -52,17 +54,19 @@ class AdminController extends Controller
 
     /**
      * Dashboard principal del panel admin.
+     * Procesa filtros globales (rango de fechas, sucursal, barbero, origen web/desktop),
+     * calcula KPIs financieros avanzados, construye la evolución diaria y carga los últimos movimientos.
      */
     public function dashboard(Request $request)
     {
-        // 1. Filtros globales
+        // 1. Filtros globales iniciales o recibidos por request
         $fechaInicio = $request->input('fecha_inicio', now()->startOfMonth()->format('Y-m-d'));
         $fechaFin    = $request->input('fecha_fin', now()->endOfMonth()->format('Y-m-d'));
         $sucursalId  = $request->input('sucursal_id');
         $barberoId   = $request->input('barbero_id');
         $origen      = $request->input('origen');
 
-        // 2. Query Base con la relación de pagos precargada
+        // 2. Query Base con la relación de pagos precargada filtrada por el rango de fechas
         $queryTurnos = Turno::with('pago')->whereBetween('fecha', [$fechaInicio, $fechaFin]);
 
         if ($sucursalId) {
@@ -72,7 +76,7 @@ class AdminController extends Controller
             $queryTurnos->where('barbero_id', $barberoId);
         }
         
-        // Filtrado por canal basado estrictamente en el método de pago
+        // Filtrado por canal basado estrictamente en el método de pago registrado
         if ($origen) {
             if ($origen === 'web') {
                 $queryTurnos->whereHas('pago', function($q) {
@@ -85,7 +89,7 @@ class AdminController extends Controller
             }
         }
 
-        // 3. KPIs Principales (Ingresos totales diferenciados por método de pago)
+        // 3. KPIs Principales (Ingresos totales diferenciados por política de pago)
         $totalTurnos     = (clone $queryTurnos)->count();
         
         $ingresosTotales = (clone $queryTurnos)
@@ -94,7 +98,7 @@ class AdminController extends Controller
                 $q->whereHas('pago', function($subQ) {
                     $subQ->where('metodo', 'mercado_pago');
                 })->where('estado', '!=', 'cancelado')
-                // Turnos Desktop (efectivo): Suman únicamente cuando su estado es completado
+                // Turnos Desktop (efectivo/mostrador): Suman únicamente cuando su estado es completado
                 ->orWhere(function($sub) {
                     $sub->whereHas('pago', function($subQ) {
                         $subQ->where('metodo', '!=', 'mercado_pago');
@@ -108,7 +112,7 @@ class AdminController extends Controller
         $pendientes  = (clone $queryTurnos)->where('estado', 'pendiente')->count();
         $cancelados  = (clone $queryTurnos)->where('estado', 'cancelado')->count();
 
-        // Highlights
+        // Highlights de servicios y barberos más demandados bajo el filtro actual
         $servicioTop = (clone $queryTurnos)
             ->selectRaw('servicio_id, COUNT(*) as total')
             ->groupBy('servicio_id')
@@ -151,7 +155,7 @@ class AdminController extends Controller
         $ingresosData   = $evoluciónDiaria->pluck('ingresos')->toArray();
         $turnosEvolData = $evoluciónDiaria->pluck('cantidad_turnos')->toArray();
 
-        // 5. Tabla de últimos movimientos
+        // 5. Tabla de últimos movimientos (últimos 10 turnos)
         $turnos = (clone $queryTurnos)
             ->with(['cliente', 'barbero', 'servicio', 'sucursal', 'pago'])
             ->orderBy('fecha', 'desc')
@@ -159,7 +163,7 @@ class AdminController extends Controller
             ->take(10)
             ->get();
 
-        // Datos para selectores
+        // Datos para selectores de filtrado en la vista
         $sucursales = \App\Models\Sucursal::all();
         $barberos   = \App\Models\Usuario::whereIn('rol_id', [1, 2])->get();
 
@@ -186,6 +190,9 @@ class AdminController extends Controller
         ));
     }
 
+    /**
+     * Muestra las estadísticas generales del sistema, soportando peticiones AJAX para actualización de gráficos dinámicos o parciales.
+     */
     public function estadisticas(Request $request)
     {
         $completados = Turno::where('estado', 'completado')->count();
@@ -227,7 +234,8 @@ class AdminController extends Controller
     }
 
     /**
-     * Gestión y filtrado de pagos.
+     * Gestión y filtrado de pagos del sistema.
+     * Permite buscar por nombre de cliente, servicio asociado o ID de pago de Mercado Pago.
      */
     public function pagos(Request $request)
     {
@@ -265,6 +273,7 @@ class AdminController extends Controller
 
     /**
      * Gestión y moderación de calificaciones de clientes (1 a 5 estrellas).
+     * Permite filtrar por puntuación en estrellas y estado de visibilidad (activas o dadas de baja).
      */
     public function calificaciones(Request $request)
     {
@@ -276,7 +285,7 @@ class AdminController extends Controller
             $query->where('puntuacion', $request->estrellas);
         }
 
-        // Filtro por estado (activos o dados de baja)
+        // Filtro por estado de moderación (activos o dados de baja)
         if ($request->filled('estado')) {
             $query->where('activo', $request->estado == 'activos');
         }
@@ -287,7 +296,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Dar de baja o reactivar un comentario (moderación).
+     * Cambia el estado de visibilidad (Dar de baja o reactivar) de un comentario de calificación (moderación).
      */
     public function toggleCalificacion($id)
     {

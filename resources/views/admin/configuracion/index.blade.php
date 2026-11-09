@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid py-4 px-lg-4">
+<div class="container-fluid py-4 py-md-5 px-lg-4" style="background-color: #f4f7f6; min-height: 100vh;">
     
     <!-- ENCABEZADO ESTILO SUCURSALES -->
-    <div class="p-4 p-lg-5 rounded-4 text-white mb-4 position-relative overflow-hidden shadow-sm" style="background: linear-gradient(135deg, #111111 0%, #1f2937 100%);">
+    <div class="p-4 p-lg-5 rounded-4 text-white mb-4 position-relative overflow-hidden shadow-sm animate-fade-in" style="background: linear-gradient(135deg, #111111 0%, #1f2937 100%);">
         <div class="position-relative z-2">
-            <span class="badge px-3 py-2 rounded-pill text-uppercase mb-2 shadow-sm fw-bold" style="background: #00a99d; color: #fff; letter-spacing: 1.5px; font-size: 0.7rem;">
+            <span class="badge px-3 py-2 rounded-pill text-uppercase mb-2 shadow-sm fw-bold btn-no-select" style="background: #00a99d; color: #fff; letter-spacing: 1.5px; font-size: 0.7rem;">
                 Ajustes Generales
             </span>
             <h1 class="display-6 fw-bold mb-1 text-white" style="letter-spacing: -0.01em;">
@@ -19,23 +19,23 @@
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm border-0 mb-4" role="alert" style="background-color: #E8F5F3; color: #0F746E;">
+        <div class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm border-0 mb-4 animate-fade-in" role="alert" style="background-color: #E8F5F3; color: #0F746E;">
             <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
     @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm border-0 mb-4" role="alert">
+        <div class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm border-0 mb-4 animate-fade-in" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
     <!-- TARJETA DE FORMULARIO DE CONFIGURACIÓN -->
-    <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
+    <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 card-modern">
         <div class="card-body p-4 p-lg-5">
-            <form action="{{ route('admin.configuracion.update') }}" method="POST">
+            <form action="{{ route('admin.configuracion.update') }}" method="POST" class="form-action-prevent">
                 @csrf
 
                 <div class="row g-4">
@@ -101,8 +101,8 @@
 
                     <!-- BOTÓN DE GUARDAR CONFIGURACIÓN -->
                     <div class="col-12 text-end mt-4">
-                        <button type="submit" class="btn text-white px-4 py-2 rounded-pill fw-bold shadow-sm transition-all" style="background-color: #00a99d;">
-                            <i class="bi bi-save me-2"></i> Guardar Cambios
+                        <button type="submit" class="btn text-white px-4 py-2 rounded-pill fw-bold shadow-sm transition-all btn-with-spinner btn-no-select" style="background-color: #00a99d;">
+                            <span class="btn-text"><i class="bi bi-save me-2"></i> Guardar Cambios</span>
                         </button>
                     </div>
 
@@ -112,7 +112,7 @@
     </div>
 
     <!-- TARJETA DE RESPALDOS Y BASE DE DATOS -->
-    <div class="card border-0 shadow-sm rounded-4 bg-white">
+    <div class="card border-0 shadow-sm rounded-4 bg-white card-modern">
         <div class="card-body p-4 p-lg-5">
             <h4 class="fw-bold text-dark mb-3">
                 <i class="bi bi-database text-teal me-2"></i> Respaldos y Base de Datos
@@ -122,7 +122,7 @@
             </p>
 
             <!-- Formulario para frecuencia automática -->
-            <form action="{{ route('admin.backup.frecuencia') }}" method="POST" class="mb-4">
+            <form action="{{ route('admin.backup.frecuencia') }}" method="POST" class="mb-4 form-action-prevent">
                 @csrf
                 <label class="form-label small fw-bold text-dark mb-1">Frecuencia de respaldo automático</label>
                 <div class="input-group" style="max-width: 500px;">
@@ -132,8 +132,8 @@
                         <option value="7" {{ ($frecuenciaActual ?? 7) == 7 ? 'selected' : '' }}>Cada 7 días (Recomendado)</option>
                         <option value="30" {{ ($frecuenciaActual ?? 7) == 30 ? 'selected' : '' }}>Cada 30 días</option>
                     </select>
-                    <button type="submit" class="btn text-white px-4 rounded-end-3 fw-bold" style="background-color: #00a99d;">
-                        Guardar Frecuencia
+                    <button type="submit" class="btn text-white px-4 rounded-end-3 fw-bold btn-with-spinner btn-no-select" style="background-color: #00a99d;">
+                        <span class="btn-text">Guardar Frecuencia</span>
                     </button>
                 </div>
             </form>
@@ -146,10 +146,10 @@
                     <h6 class="fw-bold mb-1 text-dark">Copia de seguridad manual</h6>
                     <p class="text-muted small mb-0">Generá y descargá el archivo comprimido (.zip) de la base de datos al instante.</p>
                 </div>
-                <form action="{{ route('admin.backup.generar') }}" method="POST">
+                <form action="{{ route('admin.backup.generar') }}" method="POST" class="form-action-prevent">
                     @csrf
-                    <button type="submit" class="btn btn-dark text-nowrap rounded-pill px-4 py-2 fw-semibold shadow-sm">
-                        <i class="bi bi-download me-1"></i> Descargar Backup Ahora
+                    <button type="submit" class="btn btn-dark text-nowrap rounded-pill px-4 py-2 fw-semibold shadow-sm btn-with-spinner btn-no-select">
+                        <span class="btn-text"><i class="bi bi-download me-1"></i> Descargar Backup Ahora</span>
                     </button>
                 </form>
             </div>
@@ -163,5 +163,61 @@
 .text-teal { color: #00a99d !important; }
 .transition-all { transition: all 0.2s ease; }
 .transition-all:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.card-modern {
+    box-shadow: 0 0.75rem 1.5rem rgba(18, 38, 63, 0.04) !important;
+    border: none;
+}
+.btn-no-select {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+/* Spinner de Tijeras Animadas */
+.scissors-spin {
+    display: inline-block;
+    animation: scissorsSpin 0.9s linear infinite;
+}
+@keyframes scissorsSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Prevenir selección por dobles clics rápidos
+    document.querySelectorAll('.btn-no-select').forEach(btn => {
+        btn.addEventListener('mousedown', function (e) {
+            if (e.detail > 1) e.preventDefault();
+        });
+    });
+
+    // SISTEMA ANTI-DOBLE CLIC Y SPINNER CON TIJERAS (Validación de 250ms)
+    document.addEventListener('submit', function (e) {
+        const form = e.target;
+        if (form.classList.contains('form-action-prevent')) {
+            const submitBtn = form.querySelector('.btn-with-spinner');
+            if (submitBtn && !submitBtn.disabled) {
+                submitBtn.disabled = true;
+                
+                const textSpan = submitBtn.querySelector('.btn-text');
+                if (textSpan) {
+                    textSpan.dataset.original = textSpan.innerHTML;
+                    setTimeout(() => {
+                        textSpan.innerHTML = `<i class="bi bi-scissors scissors-spin me-1"></i> Procesando...`;
+                    }, 250);
+                }
+            }
+        }
+    });
+});
+</script>
 @endsection

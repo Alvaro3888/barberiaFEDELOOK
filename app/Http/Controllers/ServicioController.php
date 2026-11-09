@@ -14,7 +14,9 @@ use Illuminate\Support\Facades\Storage;
 class ServicioController extends Controller
 {
     /**
-     * Vista pública del index (usuario/index.blade.php).
+     * Vista pública del index principal (usuario/index.blade.php).
+     * Carga servicios activos con sus relaciones de sucursales, turnos del usuario autenticado (si aplica)
+     * e imágenes configuradas para el banner principal (hero).
      */
     public function indexPublic()
     {
@@ -37,7 +39,8 @@ class ServicioController extends Controller
     }
 
     /**
-     * Listado de servicios (panel admin - Muestra activos e inactivos).
+     * Listado general de servicios en el panel de administración (muestra tanto activos como inactivos).
+     * Soporta filtros por sucursal y tipo de servicio, además de respuestas dinámicas vía AJAX para tablas parciales.
      */
     public function index(Request $request)
     {
@@ -61,6 +64,9 @@ class ServicioController extends Controller
         return view('admin.servicios.index', compact('servicios','sucursales','tipos'));
     }
 
+    /**
+     * Muestra el formulario para la creación de un nuevo servicio.
+     */
     public function create()
     {
         $sucursales = Sucursal::all();
@@ -68,6 +74,10 @@ class ServicioController extends Controller
         return view('admin.servicios.create', compact('sucursales','tipos'));
     }
 
+    /**
+     * Almacena un nuevo servicio en la base de datos previa validación estricta de campos.
+     * Gestiona opcionalmente la subida y almacenamiento de la imagen ilustrativa en el disco público.
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -81,7 +91,7 @@ class ServicioController extends Controller
         $servicio = new Servicio($request->only([
             'nombre','duracion','precio_actual','tipo_servicio_id'
         ]));
-        $servicio->activo = true;
+        $servicio->activo = true; // Todo servicio nuevo nace activo por defecto
 
         if ($request->hasFile('imagen')) {
             $servicio->imagen = $request->file('imagen')->store('servicios','public');
@@ -92,11 +102,17 @@ class ServicioController extends Controller
         return redirect()->route('admin.servicios.index')->with('success','Servicio creado correctamente.');
     }
 
+    /**
+     * Muestra la información detallada de un servicio específico en el panel de administración.
+     */
     public function show(string $id)
     {
         return view('admin.servicios.show',['servicio'=>Servicio::with('tipoServicio.sucursal')->findOrFail($id)]);
     }
 
+    /**
+     * Carga el formulario de edición con los datos actuales de un servicio.
+     */
     public function edit(string $id)
     {
         $servicio   = Servicio::findOrFail($id);
@@ -105,6 +121,10 @@ class ServicioController extends Controller
         return view('admin.servicios.edit', compact('servicio','sucursales','tipos'));
     }
 
+    /**
+     * Actualiza la información de un servicio existente.
+     * Si se adjunta una nueva imagen, elimina la anterior del almacenamiento público para evitar archivos huérfanos.
+     */
     public function update(Request $request, string $id)
     {
         $request->validate([
@@ -133,6 +153,9 @@ class ServicioController extends Controller
         return redirect()->route('admin.servicios.index')->with('success','Servicio actualizado correctamente.');
     }
 
+    /**
+     * Realiza una baja lógica (Soft-Delete) de un servicio marcándolo como inactivo (activo = false).
+     */
     public function destroy($id)
     {
         $servicio = Servicio::findOrFail($id);
@@ -143,6 +166,9 @@ class ServicioController extends Controller
             ->with('success', 'Servicio desactivado correctamente.');
     }
 
+    /**
+     * Reactiva un servicio previamente dado de baja lógica (activo = true).
+     */
     public function activate($id)
     {
         $servicio = Servicio::findOrFail($id);
@@ -154,7 +180,7 @@ class ServicioController extends Controller
     }
 
     /**
-     * Vistas públicas de servicios filtradas por tipo y estrictamente activos.
+     * Vistas públicas de servicios filtradas por la categoría de "Cortes" y estrictamente activos.
      */
     public function cortes()
     {
@@ -164,6 +190,9 @@ class ServicioController extends Controller
         ]);
     }
 
+    /**
+     * Vistas públicas de servicios filtradas por la categoría de "Barba" y estrictamente activos.
+     */
     public function barba()
     {
         return view('usuario.servicios.barba',[
@@ -172,6 +201,9 @@ class ServicioController extends Controller
         ]);
     }
 
+    /**
+     * Vistas públicas de servicios filtradas por la categoría de "Coloración" y estrictamente activos.
+     */
     public function coloracion()
     {
         return view('usuario.servicios.coloracion',[

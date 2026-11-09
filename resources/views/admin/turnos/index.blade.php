@@ -24,7 +24,7 @@
         </div>
     @endif
 
-    <!-- 🌟 Encabezado Principal del Administrador -->
+    <!-- Encabezado Principal del Administrador -->
     <div class="row align-items-center mb-4 g-3">
         <div class="col-12 col-md-8">
             <span class="badge bg-dark text-white px-3 py-1 rounded-pill small fw-semibold mb-2 shadow-sm" style="background-color: #111827 !important;">
@@ -33,7 +33,7 @@
             <h2 class="fw-bold text-dark mb-0" style="font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; letter-spacing: 1px;">
                 Gestión General de <span style="color: #168F87;">Turnos</span>
             </h2>
-            <p class="text-muted small mb-0 mt-1">Supervisión completa de citas, control de origen (Online vs Mostrador) y ejecución de cancelaciones de emergencia.</p>
+            <p class="text-muted small mb-0 mt-1">Supervisión completa de citas, control de origen y ejecución contable.</p>
         </div>
         <div class="col-12 col-md-4 text-md-end">
             <button type="button" class="btn btn-dark fw-bold rounded-pill shadow-sm px-4 py-2" data-bs-toggle="modal" data-bs-target="#modalNuevoTurnoAdmin" style="background-color: #111827;">
@@ -42,7 +42,7 @@
         </div>
     </div>
 
-    <!-- 🔍 Filtros en Vivo Rediseñados -->
+    <!-- Filtros en Vivo con Tijeras -->
     <div class="card border-0 shadow-sm rounded-4 mb-4 p-4 bg-white">
         <form method="GET" action="{{ route('admin.turnos.index') }}" class="row g-3 align-items-end" id="formFiltros">
             <div class="col-12 col-sm-6 col-md-2">
@@ -100,7 +100,7 @@
                 </select>
             </div>
             <div class="col-12 col-sm-6 col-md-2 d-flex gap-2">
-                <a href="{{ route('admin.turnos.index') }}" class="btn btn-sm btn-outline-secondary w-100 fw-bold rounded-pill py-2 shadow-sm">Limpiar</a>
+                <a href="{{ route('admin.turnos.index') }}" id="btnLimpiarFiltros" class="btn btn-sm btn-outline-secondary w-100 fw-bold rounded-pill py-2 shadow-sm">Limpiar</a>
             </div>
         </form>
     </div>
@@ -146,7 +146,6 @@
     @foreach($secciones as $seccion)
         @if($seccion['lista']->isNotEmpty())
             <div class="mb-5">
-                <!-- Cabecera de la sección -->
                 <div class="d-flex align-items-center justify-content-between mb-3 px-1">
                     <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2" style="font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 0.5px;">
                         <span class="badge bg-dark rounded-pill px-3 py-1 fs-6" style="background-color: #111827 !important;">
@@ -179,9 +178,7 @@
                         };
                     @endphp
 
-                    <!-- ========================================== -->
-                    <!-- 📱 VISTA MÓVIL (Tarjetas individuales)      -->
-                    <!-- ========================================== -->
+                    <!-- VISTA MÓVIL -->
                     <div class="card border-0 shadow-sm rounded-4 mb-3 p-3 bg-white d-block d-md-none">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div>
@@ -208,7 +205,7 @@
                                 </div>
                                 <div class="col-6">
                                     <strong>Origen:</strong> 
-                                    @if(optional($turno->pago)->payment_id_mp)
+                                    @if($turno->pago && $turno->pago->payment_id_mp)
                                         <span class="text-success fw-semibold">Online (MP)</span>
                                     @else
                                         <span>Mostrador</span>
@@ -225,104 +222,65 @@
                                 <div class="col-12 mt-1">
                                     <strong>Sucursal:</strong> {{ $turno->sucursal->nombre ?? '-' }}
                                 </div>
-                                @if($turno->motivo_cancelacion_emergencia)
-                                    <div class="col-12 mt-1 text-danger fst-italic">
-                                        <strong>Motivo Bomba:</strong> {{ $turno->motivo_cancelacion_emergencia }}
-                                    </div>
-                                @endif
                             </div>
                         </div>
 
-                        <!-- Acciones en Móvil -->
-                        <div class="d-flex justify-content-end align-items-center gap-2">
+                        <div class="d-flex justify-content-end align-items-center gap-2 flex-wrap">
                             @if($esVencidoPasado || $turno->estado === 'completado' || $turno->estado === 'cancelado')
                                 <span class="text-muted small fst-italic">Sin acciones</span>
                             @else
                                 @if(in_array($turno->estado, ['pendiente', 'confirmado']) && $yaEmpezoElTurno && !$excedioToleranciaCompletar)
-                                    <form action="{{ route('admin.turnos.completar', $turno->id) }}" method="POST" class="m-0" onsubmit="return confirm('¿Marcar este turno como completado?');">
+                                    <form action="{{ route('admin.turnos.completar', $turno->id) }}" method="POST" class="m-0 form-spinner" onsubmit="return confirm('¿Marcar este turno como completado?');">
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-bold">
+                                        <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-bold btn-action-spinner">
                                             <i class="bi bi-check-lg me-1"></i> Completar
                                         </button>
                                     </form>
                                 @endif
 
-                                @if(!$yaPasoLaHora && !$turno->esPagoOnline())
+                                @if($turno->pago && $turno->pago->payment_id_mp)
+                                    {{-- Botón para Turno Online con Reembolso API MP --}}
                                     <button type="button" 
-                                            class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold btn-editar-turno"
-                                            data-id="{{ $turno->id }}"
-                                            data-cliente="{{ $turno->cliente_nombre_manual ?? ($turno->cliente->nombre ?? $turno->cliente->name) }}"
-                                            data-es-manual="{{ $turno->cliente_nombre_manual ? '1' : '0' }}"
-                                            data-sucursal="{{ $turno->sucursal_id }}"
-                                            data-barbero="{{ $turno->barbero_id }}"
-                                            data-servicios="{{ json_encode($turno->servicios->isNotEmpty() ? $turno->servicios->pluck('id') : [$turno->servicio_id]) }}"
-                                            data-fecha="{{ \Carbon\Carbon::parse($turno->fecha)->format('Y-m-d') }}"
-                                            data-hora="{{ \Carbon\Carbon::parse($turno->hora)->format('H:i') }}"
-                                            data-estado="{{ $turno->estado }}"
+                                            class="btn btn-sm btn-danger fw-bold rounded-pill px-3 py-1 shadow-sm d-inline-flex align-items-center gap-1" 
                                             data-bs-toggle="modal" 
-                                            data-bs-target="#modalEditarTurnoAdmin">
-                                        <i class="bi bi-pencil me-1"></i> Editar
+                                            data-bs-target="#modalReembolsoOnline{{ $turno->id }}">
+                                        <i class="bi bi-cash-coin"></i> Reembolsar
                                     </button>
+                                @else
+                                    {{-- CRUD Libre Desktop / Mostrador --}}
+                                    @if(!$yaPasoLaHora)
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold btn-editar-turno"
+                                                data-id="{{ $turno->id }}"
+                                                data-cliente="{{ $turno->cliente_nombre_manual ?? ($turno->cliente->nombre ?? $turno->cliente->name) }}"
+                                                data-es-manual="{{ $turno->cliente_nombre_manual ? '1' : '0' }}"
+                                                data-sucursal="{{ $turno->sucursal_id }}"
+                                                data-barbero="{{ $turno->barbero_id }}"
+                                                data-servicios="{{ json_encode($turno->servicios->isNotEmpty() ? $turno->servicios->pluck('id') : [$turno->servicio_id]) }}"
+                                                data-fecha="{{ \Carbon\Carbon::parse($turno->fecha)->format('Y-m-d') }}"
+                                                data-hora="{{ \Carbon\Carbon::parse($turno->hora)->format('H:i') }}"
+                                                data-estado="{{ $turno->estado }}"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#modalEditarTurnoAdmin">
+                                            <i class="bi bi-pencil me-1"></i> Editar
+                                        </button>
+                                    @endif
 
-                                    <form action="{{ route('admin.turnos.cancelarAdmin', $turno->id) }}" method="POST" class="m-0" onsubmit="return confirm('¿Estás seguro de cancelar este turno?');">
+                                    <form action="{{ route('admin.turnos.cancelarAdmin', $turno->id) }}" method="POST" class="m-0 form-spinner" onsubmit="return confirm('¿Estás seguro de cancelar este turno de mostrador?');">
                                         @csrf
                                         @method('PUT')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1 fw-bold">
-                                            <i class="bi bi-x-lg me-1"></i> Cancelar
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1 fw-bold btn-action-spinner">
+                                            <i class="bi bi-x-circle me-1"></i> Cancelar Turno
                                         </button>
                                     </form>
                                 @endif
-
-                                <!-- 💣 Botón Bomba Atómica Móvil -->
-                                <button type="button" 
-                                        class="btn btn-sm btn-danger fw-bold rounded-pill px-3 py-1 shadow-sm d-inline-flex align-items-center gap-1" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#modalBombaAtomicaMobile{{ $turno->id }}">
-                                    <i class="bi bi-radioactive"></i> Bomba
-                                </button>
                             @endif
-                        </div>
-                    </div>
-
-                    <!-- Modal Bomba Atómica Móvil -->
-                    <div class="modal fade text-start" id="modalBombaAtomicaMobile{{ $turno->id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content border-0 shadow-lg rounded-4">
-                                <div class="modal-header bg-danger text-white border-0 rounded-top-4 p-4">
-                                    <h5 class="modal-title fw-bold">
-                                        <i class="bi bi-exclamation-triangle-fill me-2"></i> 💣 Cancelación de Emergencia
-                                    </h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <form action="{{ route('admin.turnos.emergencia', $turno->id) }}" method="POST">
-                                    @csrf
-                                    @method('PUT')
-                                    <div class="modal-body p-4">
-                                        <div class="alert alert-warning border-0 small mb-3 rounded-3">
-                                            <strong>¡Atención!</strong> Se cancelará el turno de <strong>{{ $turno->cliente->nombre ?? $turno->cliente_nombre_manual }}</strong>.
-                                            @if(optional($turno->pago)->payment_id_mp)
-                                                <br><span class="text-success fw-bold mt-1 d-block">✨ Reembolso automático del 100% por Mercado Pago.</span>
-                                            @endif
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-bold text-dark small text-uppercase">Motivo de Fuerza Mayor <span class="text-danger">*</span></label>
-                                            <textarea name="motivo_cancelacion_emergencia" class="form-control rounded-3 shadow-sm" rows="3" minlength="5" maxlength="500" required placeholder="Escribí el motivo..."></textarea>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer border-0 bg-light rounded-bottom-4 px-4 py-3">
-                                        <button type="button" class="btn btn-sm btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Cerrar</button>
-                                        <button type="submit" class="btn btn-sm btn-danger fw-bold rounded-pill px-4 shadow-sm">Confirmar Bomba</button>
-                                    </div>
-                                </form>
-                            </div>
                         </div>
                     </div>
                 @endforeach
 
-                <!-- ========================================== -->
-                <!-- 💻 VISTA ESCRITORIO (Tabla clásica)        -->
-                <!-- ========================================== -->
+                <!-- VISTA ESCRITORIO -->
                 <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white d-none d-md-block">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
@@ -381,7 +339,7 @@
                                         @endif
                                     </td>
                                     <td class="py-3">
-                                        @if(optional($turno->pago)->payment_id_mp)
+                                        @if($turno->pago && $turno->pago->payment_id_mp)
                                             <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill">
                                                 <i class="bi bi-shield-check me-1"></i> Online (MP)
                                             </span>
@@ -410,9 +368,6 @@
                                     </td>
                                     <td class="py-3">
                                         <span class="badge {{ $badgeEstado }} px-3 py-1 rounded-pill">{{ ucfirst($turno->estado) }}</span>
-                                        @if($turno->motivo_cancelacion_emergencia)
-                                            <br><small class="text-danger fst-italic mt-1 d-block" title="{{ $turno->motivo_cancelacion_emergencia }}">Motivo: {{ Str::limit($turno->motivo_cancelacion_emergencia, 25) }}</small>
-                                        @endif
                                     </td>
                                     <td class="text-center align-middle py-3">
                                         @if($esVencidoPasado || $turno->estado === 'completado' || $turno->estado === 'cancelado')
@@ -420,86 +375,54 @@
                                         @else
                                             <div class="d-flex justify-content-center align-items-center gap-2">
                                                 @if(in_array($turno->estado, ['pendiente', 'confirmado']) && $yaEmpezoElTurno && !$excedioToleranciaCompletar)
-                                                    <form action="{{ route('admin.turnos.completar', $turno->id) }}" method="POST" class="m-0 d-inline" onsubmit="return confirm('¿Marcar este turno como completado?');">
+                                                    <form action="{{ route('admin.turnos.completar', $turno->id) }}" method="POST" class="m-0 d-inline form-spinner" onsubmit="return confirm('¿Marcar este turno como completado?');">
                                                         @csrf
                                                         @method('PATCH')
-                                                        <button type="submit" class="btn btn-sm btn-light text-success border shadow-sm rounded-circle p-1 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Completar Turno">
+                                                        <button type="submit" class="btn btn-sm btn-light text-success border shadow-sm rounded-circle p-1 d-flex align-items-center justify-content-center btn-action-spinner" style="width: 32px; height: 32px;" title="Completar Turno">
                                                             <i class="bi bi-check-lg fs-6"></i>
                                                         </button>
                                                     </form>
                                                 @endif
 
-                                                @if(!$yaPasoLaHora && !$turno->esPagoOnline())
+                                                @if($turno->pago && $turno->pago->payment_id_mp)
+                                                    {{-- Botón para Turno Online con Reembolso API MP --}}
                                                     <button type="button" 
-                                                            class="btn btn-sm btn-light text-primary border shadow-sm rounded-circle p-1 d-flex align-items-center justify-content-center btn-editar-turno"
-                                                            style="width: 32px; height: 32px;"
-                                                            data-id="{{ $turno->id }}"
-                                                            data-cliente="{{ $turno->cliente_nombre_manual ?? ($turno->cliente->nombre ?? $turno->cliente->name) }}"
-                                                            data-es-manual="{{ $turno->cliente_nombre_manual ? '1' : '0' }}"
-                                                            data-sucursal="{{ $turno->sucursal_id }}"
-                                                            data-barbero="{{ $turno->barbero_id }}"
-                                                            data-servicios="{{ json_encode($turno->servicios->isNotEmpty() ? $turno->servicios->pluck('id') : [$turno->servicio_id]) }}"
-                                                            data-fecha="{{ \Carbon\Carbon::parse($turno->fecha)->format('Y-m-d') }}"
-                                                            data-hora="{{ \Carbon\Carbon::parse($turno->hora)->format('H:i') }}"
-                                                            data-estado="{{ $turno->estado }}"
+                                                            class="btn btn-sm btn-danger fw-bold rounded-pill px-3 py-1 shadow-sm d-inline-flex align-items-center gap-1" 
                                                             data-bs-toggle="modal" 
-                                                            data-bs-target="#modalEditarTurnoAdmin"
-                                                            title="Editar Turno">
-                                                        <i class="bi bi-pencil fs-6"></i>
+                                                            data-bs-target="#modalReembolsoOnline{{ $turno->id }}"
+                                                            title="Cancelar Turno y Devolver Dinero Online">
+                                                        <i class="bi bi-cash-coin"></i> <span class="small">Reembolsar</span>
                                                     </button>
+                                                @else
+                                                    {{-- CRUD Libre Desktop / Mostrador --}}
+                                                    @if(!$yaPasoLaHora)
+                                                        <button type="button" 
+                                                                class="btn btn-sm btn-light text-primary border shadow-sm rounded-circle p-1 d-flex align-items-center justify-content-center btn-editar-turno"
+                                                                style="width: 32px; height: 32px;"
+                                                                data-id="{{ $turno->id }}"
+                                                                data-cliente="{{ $turno->cliente_nombre_manual ?? ($turno->cliente->nombre ?? $turno->cliente->name) }}"
+                                                                data-es-manual="{{ $turno->cliente_nombre_manual ? '1' : '0' }}"
+                                                                data-sucursal="{{ $turno->sucursal_id }}"
+                                                                data-barbero="{{ $turno->barbero_id }}"
+                                                                data-servicios="{{ json_encode($turno->servicios->isNotEmpty() ? $turno->servicios->pluck('id') : [$turno->servicio_id]) }}"
+                                                                data-fecha="{{ \Carbon\Carbon::parse($turno->fecha)->format('Y-m-d') }}"
+                                                                data-hora="{{ \Carbon\Carbon::parse($turno->hora)->format('H:i') }}"
+                                                                data-estado="{{ $turno->estado }}"
+                                                                data-bs-toggle="modal" 
+                                                                data-bs-target="#modalEditarTurnoAdmin"
+                                                                title="Editar Turno">
+                                                            <i class="bi bi-pencil fs-6"></i>
+                                                        </button>
+                                                    @endif
 
-                                                    <form action="{{ route('admin.turnos.cancelarAdmin', $turno->id) }}" method="POST" class="m-0 d-inline" onsubmit="return confirm('¿Estás seguro de cancelar este turno?');">
+                                                    <form action="{{ route('admin.turnos.cancelarAdmin', $turno->id) }}" method="POST" class="m-0 d-inline form-spinner" onsubmit="return confirm('¿Estás seguro de cancelar este turno de mostrador?');">
                                                         @csrf
                                                         @method('PUT')
-                                                        <button type="submit" class="btn btn-sm btn-light text-danger border shadow-sm rounded-circle p-1 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Cancelar Turno">
+                                                        <button type="submit" class="btn btn-sm btn-light text-danger border shadow-sm rounded-circle p-1 d-flex align-items-center justify-content-center btn-action-spinner" style="width: 32px; height: 32px;" title="Cancelar Turno de Mostrador">
                                                             <i class="bi bi-x-lg fs-6"></i>
                                                         </button>
                                                     </form>
                                                 @endif
-
-                                                <!-- 💣 Bomba Atómica Desktop -->
-                                                <button type="button" 
-                                                        class="btn btn-sm btn-danger fw-bold rounded-pill px-3 py-1 shadow-sm d-inline-flex align-items-center gap-1" 
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#modalBombaAtomica{{ $turno->id }}"
-                                                        title="Cancelar Emergencia y Reembolsar">
-                                                    <i class="bi bi-radioactive"></i> <span class="small">Bomba</span>
-                                                </button>
-
-                                                <!-- Modal Individual de Bomba Atómica Desktop -->
-                                                <div class="modal fade text-start" id="modalBombaAtomica{{ $turno->id }}" tabindex="-1" aria-hidden="true">
-                                                    <div class="modal-dialog modal-dialog-centered">
-                                                        <div class="modal-content border-0 shadow-lg rounded-4">
-                                                            <div class="modal-header bg-danger text-white border-0 rounded-top-4 p-4">
-                                                                <h5 class="modal-title fw-bold">
-                                                                    <i class="bi bi-exclamation-triangle-fill me-2"></i> 💣 Cancelación de Emergencia
-                                                                </h5>
-                                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                            </div>
-                                                            <form action="{{ route('admin.turnos.emergencia', $turno->id) }}" method="POST">
-                                                                @csrf
-                                                                @method('PUT')
-                                                                <div class="modal-body p-4">
-                                                                    <div class="alert alert-warning border-0 small mb-3 rounded-3">
-                                                                        <strong>¡Atención!</strong> Se cancelará el turno de <strong>{{ $turno->cliente->nombre ?? $turno->cliente_nombre_manual }}</strong> 
-                                                                        programado para el <strong>{{ \Carbon\Carbon::parse($turno->fecha)->format('d/m/Y') }} a las {{ \Carbon\Carbon::parse($turno->hora)->format('H:i') }} hs</strong>. 
-                                                                        @if(optional($turno->pago)->payment_id_mp)
-                                                                            <br><span class="text-success fw-bold mt-1 d-block">✨ Se procesará un reembolso automático del 100% a través de Mercado Pago.</span>
-                                                                        @endif
-                                                                    </div>
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label fw-bold text-dark small text-uppercase">Motivo de Fuerza Mayor <span class="text-danger">*</span></label>
-                                                                        <textarea name="motivo_cancelacion_emergencia" class="form-control rounded-3 shadow-sm" rows="3" minlength="5" maxlength="500" required placeholder="Ej: Rotura de cañería, ausencia imprevista..."></textarea>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="modal-footer border-0 bg-light rounded-bottom-4 px-4 py-3">
-                                                                    <button type="button" class="btn btn-sm btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Cerrar</button>
-                                                                    <button type="submit" class="btn btn-sm btn-danger fw-bold rounded-pill px-4 shadow-sm">Confirmar Bomba Atómica</button>
-                                                                </div>
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                </div>
                                             </div>
                                         @endif
                                     </td>
@@ -522,7 +445,6 @@
     </div>
 @endif
 </div>
-
 
 <!-- ========================================================================= -->
 <!-- MODAL DE NUEVO TURNO MANUAL -->
@@ -577,7 +499,7 @@
                         <div id="listaResultadosClientes" class="list-group position-absolute w-100 shadow-lg d-none mt-1" style="z-index: 1056; max-height: 200px; overflow-y: auto; left: 0;"></div>
                     </div>
 
-                    <!-- Cliente Manual (Con validación estricta de solo letras y espacios) -->
+                    <!-- Cliente Manual -->
                     <div class="mb-3 {{ old('tipo_cliente') == 'manual' ? '' : 'd-none' }}" id="box_cliente_manual">
                         <label for="modal_cliente_nombre_manual" class="form-label fw-semibold text-secondary">Nombre / Alias del Cliente</label>
                         <div class="input-group shadow-sm">
@@ -656,17 +578,18 @@
 
                 </div>
                 
-                <!-- FOOTER CON LOS DOS BOTONES -->
                 <div class="modal-footer bg-light px-4 py-3 border-top d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-outline-secondary btn-lg py-2 rounded-3 px-4 shadow-xs" data-bs-dismiss="modal">Cancelar</button>
+                    <!-- Botón con Validación AJAX Pre-flight y Tijeras -->
                     <button type="submit" id="btnGuardarTurno" class="btn btn-teal text-white btn-lg py-2 rounded-3 fw-bold shadow-sm px-4">Confirmar y Otorgar Turno</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
 <!-- ========================================================================= -->
-<!-- MODAL DE EDITAR TURNO (IDÉNTICO AL DE CREACIÓN) -->
+<!-- MODAL DE EDITAR TURNO -->
 <!-- ========================================================================= -->
 <div class="modal fade" id="modalEditarTurnoAdmin" tabindex="-1" aria-labelledby="modalEditarTurnoAdminLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -685,7 +608,6 @@
                 @method('PUT')
                 <div class="modal-body p-4">
 
-                    <!-- Cliente Manual (Con validación estricta de solo letras) -->
                     <div class="mb-3" id="edit_box_cliente_manual">
                         <label for="edit_cliente_nombre_manual" class="form-label fw-semibold text-secondary">Nombre / Alias del Cliente</label>
                         <div class="input-group shadow-sm">
@@ -694,7 +616,6 @@
                         </div>
                     </div>
 
-                    <!-- Cliente Registrado (Solo lectura) -->
                     <div class="mb-3 d-none" id="edit_box_cliente_registrado">
                         <label class="form-label fw-semibold text-secondary">Cliente Registrado</label>
                         <div class="input-group shadow-sm">
@@ -703,7 +624,6 @@
                         </div>
                     </div>
 
-                    <!-- Sucursal -->
                     <div class="mb-3">
                         <label for="edit_sucursal_id" class="form-label fw-semibold text-secondary">Sucursal <span class="text-danger">*</span></label>
                         <select name="sucursal_id" id="edit_sucursal_id" class="form-select form-select-lg fs-6 rounded-3 shadow-sm" required>
@@ -714,7 +634,6 @@
                         </select>
                     </div>
 
-                    <!-- Buscador en Vivo de Servicios (Idéntico al Create) -->
                     <div class="mb-3 position-relative">
                         <label class="form-label fw-semibold text-secondary">Servicios <span class="text-danger">*</span></label>
                         <div class="input-group mb-2 shadow-sm">
@@ -732,7 +651,6 @@
                         </div>
                     </div>
 
-                    <!-- Barbero (Lista Horizontal de Avatares) -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-secondary">Barbero <span class="text-danger">*</span></label>
                         <input type="hidden" name="barbero_id" id="edit_barbero_id" value="" required>
@@ -743,13 +661,11 @@
                     </div>
 
                     <div class="row">
-                        <!-- Fecha -->
                         <div class="col-md-6 mb-3">
                             <label for="edit_fecha" class="form-label fw-semibold text-secondary">Fecha <span class="text-danger">*</span></label>
                             <input type="date" name="fecha" id="edit_fecha" class="form-control form-control-lg fs-6 rounded-3 shadow-sm" min="{{ date('Y-m-d') }}" required disabled>
                         </div>
 
-                        <!-- Hora (Select dinámico de baches libres) -->
                         <div class="col-md-6 mb-3">
                             <label for="edit_hora" class="form-label fw-semibold text-secondary">Hora <span class="text-danger">*</span></label>
                             <select name="hora" id="edit_hora" class="form-select form-select-lg fs-6 rounded-3 shadow-sm" required disabled>
@@ -759,7 +675,6 @@
                         </div>
                     </div>
 
-                    <!-- Estado -->
                     <div class="mb-3">
                         <label for="edit_estado" class="form-label fw-semibold text-secondary">Estado <span class="text-danger">*</span></label>
                         <select name="estado" id="edit_estado" class="form-select form-select-lg fs-6 rounded-3 shadow-sm" required>
@@ -773,13 +688,63 @@
                 </div>
                 <div class="modal-footer bg-light px-4 py-3 border-top d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-outline-secondary btn-lg py-2 rounded-3 px-4 shadow-xs" data-bs-dismiss="modal">Cancelar</button>
+                    <!-- Botón de Edición con Tijeras -->
                     <button type="submit" id="btnGuardarEdicion" class="btn btn-teal text-white btn-lg py-2 rounded-3 fw-bold shadow-sm px-4">Guardar Cambios</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<!-- Pantalla de Carga Global con Animación de Tijeras -->
+<div id="loadingOverlay">
+    <div class="text-center p-4 rounded-4 shadow-lg bg-dark border border-secondary" style="max-width: 300px;">
+        <div class="mb-3">
+            <i class="bi bi-scissors text-teal animacion-tijera" style="font-size: 3.5rem !important;"></i>
+        </div>
+        <h5 class="fw-bold mb-1 text-white" style="font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; font-size: 1.5rem;">Cargando...</h5>
+        <p class="text-white-50 small mb-0">Actualizando listados y disponibilidad</p>
+    </div>
+</div>
+
 <style>
+    @keyframes tijeraCorte {
+        0% { transform: rotate(0deg) scale(1); }
+        25% { transform: rotate(-15deg) scale(1.1); }
+        50% { transform: rotate(0deg) scale(1); }
+        75% { transform: rotate(15deg) scale(1.1); }
+        100% { transform: rotate(0deg) scale(1); }
+    }
+
+    .animacion-tijera {
+        display: inline-block;
+        animation: tijeraCorte 0.8s ease-in-out infinite;
+    }
+
+    #loadingOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(5px);
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    #loadingOverlay.activo {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
     .barberos-lista-horizontal::-webkit-scrollbar { display: none; }
     .barbero-item-h { cursor: pointer; }
     .barbero-item-h:hover .barbero-img { border-color: #0d9488 !important; transform: scale(1.05); }
@@ -801,7 +766,6 @@
         border-color: #0d9488 !important;
     }
 
-    /* FORZAR VISIBILIDAD DE LOS BOTONES CUANDO ESTÁN DESHABILITADOS */
     #btnGuardarTurno:disabled,
     #btnGuardarEdicion:disabled {
         background-color: #e2e8f0 !important;
@@ -812,7 +776,6 @@
         display: inline-block !important;
     }
 
-    /* CUANDO ESTÁN ACTIVOS, TOMAN EL COLOR TEAL INSTITUCIONAL */
     #btnGuardarTurno:not(:disabled),
     #btnGuardarEdicion:not(:disabled) {
         background-color: #0d9488 !important;
@@ -822,15 +785,114 @@
     }
 </style>
 
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+
+    const loadingOverlay = document.getElementById('loadingOverlay');
+
+    const formFiltros = document.getElementById('formFiltros');
+    const btnLimpiarFiltros = document.getElementById('btnLimpiarFiltros');
+
+    if (formFiltros && loadingOverlay) {
+        formFiltros.querySelectorAll('select').forEach(select => {
+            select.addEventListener('change', function() {
+                loadingOverlay.classList.add('activo');
+                formFiltros.submit();
+            });
+        });
+    }
+
+    if (btnLimpiarFiltros && loadingOverlay) {
+        btnLimpiarFiltros.addEventListener('click', function(e) {
+            e.preventDefault();
+            loadingOverlay.classList.add('activo');
+            window.location.href = this.href;
+        });
+    }
+
+    const formTurnoAdmin = document.getElementById('formTurnoAdmin');
+    const formEditarTurnoAdmin = document.getElementById('formEditarTurnoAdmin');
+    const btnGuardarTurno = document.getElementById('btnGuardarTurno');
+    const btnGuardarEdicion = document.getElementById('btnGuardarEdicion');
+
+    if (formTurnoAdmin && loadingOverlay && btnGuardarTurno) {
+        formTurnoAdmin.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if (btnGuardarTurno.hasAttribute('disabled')) return;
+
+            btnGuardarTurno.disabled = true;
+            loadingOverlay.classList.add('activo');
+
+            const barberoId = document.getElementById('modal_barbero_id').value;
+            const sucursalId = document.getElementById('modal_sucursal_id').value;
+            const fechaVal = document.getElementById('modal_fecha').value;
+            const horaVal = document.getElementById('modal_hora').value;
+
+            let duracionTotal = 30;
+            if (typeof serviciosElegidos !== 'undefined' && serviciosElegidos.length > 0) {
+                duracionTotal = serviciosElegidos.reduce((acc, s) => acc + parseInt(s.duracion || 30), 0);
+            }
+
+            fetch(`/turnos/horarios-disponibles?barbero_id=${barberoId}&sucursal_id=${sucursalId}&fecha=${fechaVal}&duracion_total=${duracionTotal}`)
+                .then(res => res.json())
+                .then(slots => {
+                    const sigueLibre = slots.some(slot => slot.hora === horaVal || slot.hora.startsWith(horaVal));
+
+                    if (sigueLibre) {
+                        formTurnoAdmin.submit();
+                    } else {
+                        loadingOverlay.classList.remove('activo');
+                        btnGuardarTurno.disabled = false;
+                        alert('¡Atención! Alguien acaba de ocupar este horario hace un instante. Por favor, seleccioná otro.');
+                        consultarHorariosDisponiblesAdmin(null);
+                    }
+                })
+                .catch(() => {
+                    formTurnoAdmin.submit();
+                });
+        });
+    }
+
+    if (formEditarTurnoAdmin && loadingOverlay && btnGuardarEdicion) {
+        formEditarTurnoAdmin.addEventListener('submit', function(e) {
+            if (btnGuardarEdicion.hasAttribute('disabled')) {
+                e.preventDefault();
+                return false;
+            }
+            btnGuardarEdicion.disabled = true;
+            loadingOverlay.classList.add('activo');
+        });
+    }
+
+    document.querySelectorAll('.form-spinner').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const btn = this.querySelector('.btn-action-spinner');
+            if (btn) {
+                if (btn.hasAttribute('disabled')) {
+                    e.preventDefault();
+                    return false;
+                }
+                btn.disabled = true;
+                btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+            }
+        });
+    });
+
+    const modalNuevoTurno = document.getElementById('modalNuevoTurnoAdmin');
+    const modalSucursal = document.getElementById('modal_sucursal_id');
+
+    if (modalNuevoTurno && modalSucursal) {
+        modalNuevoTurno.addEventListener('shown.bs.modal', function () {
+            if (modalSucursal.options.length > 1 && !modalSucursal.value) {
+                modalSucursal.value = modalSucursal.options[1].value;
+                modalSucursal.dispatchEvent(new Event('change'));
+            }
+        });
+    }
+
     const sucursalSelect = document.getElementById('sucursal_id');
     const barberoSelect = document.getElementById('barbero_id');
-    const rangeSelect = document.getElementById('range');
-    const estadoSelect = document.getElementById('estado');
-    const tipoTurnoSelect = document.getElementById('tipo_turno'); // <--- Añadido aquí
-    const formFiltros = document.getElementById('formFiltros');
     
     if (barberoSelect && sucursalSelect) {
         const todasLasOpcionesBarberos = Array.from(barberoSelect.options);
@@ -858,20 +920,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         sucursalSelect.addEventListener('change', function() {
             actualizarBarberosLocales();
-            if (formFiltros) formFiltros.submit();
-        });
-
-        // <--- Incluido tipoTurnoSelect para que dispare el submit automático al cambiar
-        [barberoSelect, rangeSelect, estadoSelect, tipoTurnoSelect].forEach(element => {
-            if (element) {
-                element.addEventListener('change', function() {
-                    if (formFiltros) formFiltros.submit();
-                });
-            }
         });
     }
 
-    // Toggle tipo cliente
     const radioReg = document.getElementById('tipoReg');
     const radioMan = document.getElementById('tipoMan');
     const boxReg = document.getElementById('box_cliente_registrado');
@@ -880,14 +931,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const hiddenClienteId = document.getElementById('modal_cliente_id');
     const inputManual = document.getElementById('modal_cliente_nombre_manual');
 
-    // Validación estricta: Solo letras y espacios en el nombre del cliente manual de creación
     if (inputManual) {
         inputManual.addEventListener('input', function() {
             this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
         });
     }
 
-    // Validación estricta: Solo letras y espacios en el nombre del cliente manual de edición
     const editInputManual = document.getElementById('edit_cliente_nombre_manual');
     if (editInputManual) {
         editInputManual.addEventListener('input', function() {
@@ -917,7 +966,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Autocomplete cliente registrado
     const clientesDelSistema = @json($clientes ?? []);
     const listaResultadosClientes = document.getElementById('listaResultadosClientes');
 
@@ -962,7 +1010,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Buscador en vivo de servicios (Creación)
     const serviciosDelSistema = @json($servicios ?? []);
     const inputBusquedaServicio = document.getElementById('inputBusquedaServicio');
     const listaResultadosServicios = document.getElementById('listaResultadosServicios');
@@ -1009,7 +1056,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             } else {
                 listaResultadosServicios.classList.remove('d-none');
-                listaResultadosServicios.innerHTML = `<div class="list-group-item text-muted small py-2">No disponible (ya elegiste un servicio de esta categoría o no existe)</div>`;
+                listaResultadosServicios.innerHTML = `<div class="list-group-item text-muted small py-2">No disponible</div>`;
             }
         });
     }
@@ -1017,13 +1064,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function agregarServicio(servicio) {
         serviciosElegidos.push(servicio);
         renderizarServiciosElegidos();
-        verificarYMostrarBarberos();
+        verificarYMostrarBarberosAdmin();
     }
 
     window.quitarServicio = function(id) {
         serviciosElegidos = serviciosElegidos.filter(s => s.id !== id);
         renderizarServiciosElegidos();
-        verificarYMostrarBarberos();
+        verificarYMostrarBarberosAdmin();
     }
 
     function renderizarServiciosElegidos() {
@@ -1054,8 +1101,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (spanMontoTotal) spanMontoTotal.textContent = precioTotal.toFixed(2);
     }
 
-    // Lógica del modal de mostrador (Creación - Secuencial estricta)
-    const modalSucursal = document.getElementById('modal_sucursal_id');
     const fechaInput = document.getElementById('modal_fecha');
     const horaInput = document.getElementById('modal_hora');
     const barberosContainer = document.getElementById('barberosContainer');
@@ -1063,9 +1108,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnGuardar = document.getElementById('btnGuardarTurno');
 
     let cacheBarberosSucursal = [];
+    let hoyStr = new Date().toISOString().split('T')[0];
 
     if (fechaInput) {
-        fechaInput.min = new Date().toISOString().split('T')[0];
+        fechaInput.min = hoyStr;
     }
 
     if (modalSucursal) {
@@ -1079,7 +1125,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(res => res.json())
                     .then(data => { 
                         cacheBarberosSucursal = data || []; 
-                        verificarYMostrarBarberos();
+                        verificarYMostrarBarberosAdmin();
                     })
                     .catch(() => { cacheBarberosSucursal = []; });
             }
@@ -1100,11 +1146,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (barberosContainer) barberosContainer.innerHTML = '<span class="text-muted fst-italic">Seleccioná una sucursal y al menos un servicio.</span>';
     }
 
-    function verificarYMostrarBarberos() {
+    function verificarYMostrarBarberosAdmin() {
         if (!modalSucursal || !barberosContainer) return;
         let sucursalId = modalSucursal.value;
+        
         if (!sucursalId || serviciosElegidos.length === 0) {
             barberosContainer.innerHTML = '<span class="text-muted fst-italic">Seleccioná sucursal y al menos un servicio.</span>';
+            if (fechaInput) {
+                fechaInput.value = '';
+                fechaInput.disabled = true;
+            }
             return;
         }
 
@@ -1113,6 +1164,45 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        let duracionTotal = serviciosElegidos.reduce((acc, s) => acc + parseInt(s.duracion || 30), 0);
+        if (duracionTotal === 0) duracionTotal = 30;
+
+        fetch(`/turnos/barbero-sugerido?sucursal_id=${sucursalId}&fecha=${hoyStr}&duracion_total=${duracionTotal}`)
+            .then(res => res.json())
+            .then(sugerencia => {
+                let barberoSugeridoId = sugerencia.barbero_id;
+                let horaSugerida = sugerencia.hora;
+
+                if (!barberoSugeridoId && cacheBarberosSucursal.length > 0) {
+                    barberoSugeridoId = cacheBarberosSucursal[0].id;
+                }
+
+                renderizarHTMLBarberosAdmin(barberoSugeridoId);
+
+                if (barberoSugeridoId) {
+                    if (inputBarberoId) inputBarberoId.value = barberoSugeridoId;
+                    
+                    if (fechaInput) {
+                        fechaInput.value = hoyStr;
+                        fechaInput.disabled = false;
+                        
+                        consultarHorariosDisponiblesAdmin(horaSugerida);
+                    }
+                }
+            })
+            .catch(() => {
+                let fallbackBarbero = cacheBarberosSucursal[0] ? cacheBarberosSucursal[0].id : null;
+                renderizarHTMLBarberosAdmin(fallbackBarbero);
+                if (fallbackBarbero && inputBarberoId) inputBarberoId.value = fallbackBarbero;
+                if (fechaInput) {
+                    fechaInput.value = hoyStr;
+                    fechaInput.disabled = false;
+                    consultarHorariosDisponiblesAdmin(null);
+                }
+            });
+    }
+
+    function renderizarHTMLBarberosAdmin(barberoARestaurar) {
         let html = '';
         cacheBarberosSucursal.forEach(barbero => {
             let iniciales = barbero.nombre.substring(0, 2).toUpperCase();
@@ -1126,7 +1216,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 imgHtml = `<div class="rounded-circle bg-teal-soft text-teal d-flex align-items-center justify-content-center fw-bold barbero-img shadow-xs mx-auto" style="width: 60px; height: 60px; font-size: 1rem; border: 2px solid #ccfbf1; transition: all 0.2s ease;">${iniciales}</div>`;
             }
 
-            let seleccionado = (inputBarberoId && inputBarberoId.value == barbero.id) ? 'seleccionado' : '';
+            let seleccionado = (barberoARestaurar && barberoARestaurar == barbero.id) ? 'seleccionado' : '';
 
             html += `
                 <div class="barbero-item-h text-center ${seleccionado}" 
@@ -1145,21 +1235,17 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         });
         barberosContainer.innerHTML = html;
-        activarClicksAvatares();
-    }
-
-    function activarClicksAvatares() {
-        const itemsBarberos = document.querySelectorAll('#barberosContainer .barbero-item-h');
-        itemsBarberos.forEach(item => {
+        
+        document.querySelectorAll('#barberosContainer .barbero-item-h').forEach(item => {
             item.addEventListener('click', function() {
-                itemsBarberos.forEach(i => i.classList.remove('seleccionado'));
+                document.querySelectorAll('#barberosContainer .barbero-item-h').forEach(i => i.classList.remove('seleccionado'));
                 this.classList.add('seleccionado');
                 if (inputBarberoId) inputBarberoId.value = this.getAttribute('data-id');
                 
                 if (fechaInput) {
                     fechaInput.disabled = false;
                     if (fechaInput.value) {
-                        consultarHorariosDisponiblesPorBarbero();
+                        consultarHorariosDisponiblesAdmin(null);
                     }
                 }
             });
@@ -1169,12 +1255,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (fechaInput) {
         fechaInput.addEventListener('change', function() {
             if (this.value && inputBarberoId && inputBarberoId.value) {
-                consultarHorariosDisponiblesPorBarbero();
+                consultarHorariosDisponiblesAdmin(null);
             }
         });
     }
 
-    function consultarHorariosDisponiblesPorBarbero() {
+    window.consultarHorariosDisponiblesAdmin = function(horaARestaurar) {
         let barberoId = inputBarberoId.value;
         let sucursalId = modalSucursal.value;
         let fechaVal = fechaInput.value;
@@ -1182,7 +1268,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!barberoId || !sucursalId || !fechaVal || duracionTotal === 0) return;
 
-        horaInput.innerHTML = '<option value="">Buscando horarios disponibles...</option>';
+        horaInput.innerHTML = '<option value="">⏳ Buscando horarios disponibles...</option>';
         horaInput.disabled = true;
 
         fetch(`/turnos/horarios-disponibles?barbero_id=${barberoId}&sucursal_id=${sucursalId}&fecha=${fechaVal}&duracion_total=${duracionTotal}`)
@@ -1190,16 +1276,22 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(slots => {
                 horaInput.innerHTML = '<option value="">Seleccioná un horario</option>';
                 if (slots.length > 0) {
-                    slots.forEach(slot => {
+                    slots.forEach((slot, index) => {
                         let opt = document.createElement('option');
                         opt.value = slot.hora;
                         opt.textContent = slot.formato;
+                        
+                        if ((horaARestaurar && slot.hora === horaARestaurar) || (!horaARestaurar && index === 0)) {
+                            opt.selected = true;
+                        }
                         horaInput.appendChild(opt);
                     });
                     horaInput.disabled = false;
+                    if (btnGuardar) btnGuardar.disabled = false;
                 } else {
                     horaInput.innerHTML = '<option value="">No hay baches libres para este barbero en esta fecha</option>';
                     horaInput.disabled = true;
+                    if (btnGuardar) btnGuardar.disabled = true;
                 }
             })
             .catch(() => {
@@ -1217,8 +1309,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // LÓGICA DEL MODAL DE EDICIÓN
-    const editModal = document.getElementById('modalEditarTurnoAdmin');
     const editSucursal = document.getElementById('edit_sucursal_id');
     const editBarberoId = document.getElementById('edit_barbero_id');
     const editBarberosContainer = document.getElementById('editBarberosContainer');
@@ -1491,7 +1581,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!barberoId || !sucursalId || !fechaVal || duracionTotal === 0) return;
 
         if(editHora) {
-            editHora.innerHTML = '<option value="">Buscando horarios...</option>';
+            editHora.innerHTML = '<option value="">⏳ Buscando horarios...</option>';
             editHora.disabled = true;
         }
 

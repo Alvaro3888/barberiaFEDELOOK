@@ -12,7 +12,7 @@
                 </a>
                 <div>
                     <h2 class="fw-bold text-dark mb-0">Editar Cliente</h2>
-                    <p class="text-muted small mb-0">Modifica los datos personales o restablece la contraseña del cliente.</p>
+                    <p class="text-muted small mb-0">Modifica los datos de contacto y operacionales del cliente.</p>
                 </div>
             </div>
 
@@ -54,23 +54,9 @@
                         </div>
 
                         <!-- Teléfono -->
-                        <div class="mb-3">
+                        <div class="mb-4">
                             <label for="telefono" class="form-label fw-semibold text-secondary small">TELÉFONO <span class="text-muted fw-normal">(Solo números, opcional)</span></label>
                             <input type="tel" name="telefono" id="telefono" class="form-control py-2" value="{{ old('telefono', $usuario->telefono) }}" placeholder="Ej. 388..." maxlength="15" autocomplete="off">
-                        </div>
-
-                        <!-- Cambio/Reset de Contraseña con Ojito -->
-                        <div class="mb-4">
-                            <label for="inputPassword" class="form-label fw-semibold text-secondary small">NUEVA CONTRASEÑA <span class="text-muted fw-normal">(Opcional)</span></label>
-                            <div class="input-group">
-                                <input type="password" id="inputPassword" name="password" class="form-control py-2" placeholder="Dejar en blanco para mantener la actual" minlength="6" autocomplete="new-password">
-                                <button class="btn btn-outline-secondary px-3" type="button" id="btnEye">
-                                    <i class="bi bi-eye" id="iconoOjito"></i>
-                                </button>
-                            </div>
-                            <div class="form-text text-muted small mt-1">
-                                Escribí una clave solo si necesitás restablecer la contraseña de este cliente (mínimo 6 caracteres).
-                            </div>
                         </div>
 
                         <!-- Botones de Acción -->
@@ -94,30 +80,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const inputNombre = document.getElementById('nombre');
     const inputEmail = document.getElementById('email');
     const inputTelefono = document.getElementById('telefono');
-    const inputPass = document.getElementById('inputPassword');
-    const btnEye = document.getElementById('btnEye');
-    const iconoOjito = document.getElementById('iconoOjito');
     const form = document.getElementById('formEditarUsuario');
 
-    // 1. Ojito de Contraseña seguro
-    if (btnEye && inputPass) {
-        btnEye.addEventListener('click', function() {
-            const type = inputPass.getAttribute('type') === 'password' ? 'text' : 'password';
-            inputPass.setAttribute('type', type);
-            if (iconoOjito) {
-                iconoOjito.className = type === 'text' ? 'bi bi-eye-slash' : 'bi bi-eye';
-            }
-        });
-    }
-
-    // 2. Teléfono: Solo números en tiempo real
+    // 1. Teléfono: Solo números en tiempo real
     if (inputTelefono) {
         inputTelefono.addEventListener('input', function() {
             this.value = this.value.replace(/\D/g, '');
         });
     }
 
-    // 3. Validación estricta 100% para Nombre y Apellido (Bloqueo de números por tecla y pegado)
+    // 2. Validación estricta para Nombre y Apellido (Bloqueo de números por tecla y pegado)
     if (inputNombre) {
         inputNombre.addEventListener('keypress', function(e) {
             const charStr = String.fromCharCode(e.which ? e.which : e.keyCode);
@@ -151,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 4. Validación en vivo del Email
+    // 3. Validación en vivo del Email
     if (inputEmail) {
         inputEmail.addEventListener('input', function() {
             const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -167,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 5. Validación completa al hacer Submit
+    // 4. Validación completa al hacer Submit
     if (form) {
         form.addEventListener('submit', function(e) {
             let valido = true;

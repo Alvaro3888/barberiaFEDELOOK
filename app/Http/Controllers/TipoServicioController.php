@@ -9,7 +9,8 @@ use App\Models\Sucursal;
 class TipoServicioController extends Controller
 {
     /**
-     * Listado de tipos de servicio (todos, activos e inactivos).
+     * Muestra el listado general de tipos de servicio en el panel de administración
+     * (incluyendo tanto activos como inactivos) cargando la relación con su sucursal.
      */
     public function index()
     {
@@ -18,7 +19,8 @@ class TipoServicioController extends Controller
     }
 
     /**
-     * Formulario de creación.
+     * Muestra el formulario de creación de un nuevo tipo de servicio,
+     * listando únicamente las sucursales que se encuentran activas.
      */
     public function create()
     {
@@ -27,7 +29,8 @@ class TipoServicioController extends Controller
     }
 
     /**
-     * Guardar un nuevo tipo de servicio.
+     * Valida y almacena un nuevo tipo de servicio en la base de datos,
+     * asignándolo a una sucursal y marcándolo como activo por defecto.
      */
     public function store(Request $request)
     {
@@ -49,7 +52,7 @@ class TipoServicioController extends Controller
     }
 
     /**
-     * Mostrar un tipo de servicio.
+     * Muestra los detalles de un tipo de servicio específico en el panel administrativo.
      */
     public function show($id)
     {
@@ -58,7 +61,8 @@ class TipoServicioController extends Controller
     }
 
     /**
-     * Formulario de edición.
+     * Muestra el formulario de edición con los datos actuales de un tipo de servicio
+     * y las sucursales activas disponibles para reasignación.
      */
     public function edit($id)
     {
@@ -68,7 +72,7 @@ class TipoServicioController extends Controller
     }
 
     /**
-     * Actualizar un tipo de servicio.
+     * Valida y actualiza la información de un tipo de servicio existente.
      */
     public function update(Request $request, $id)
     {
@@ -86,7 +90,8 @@ class TipoServicioController extends Controller
     }
 
     /**
-     * Desactivar (borrado lógico).
+     * Realiza un borrado lógico (Soft-Delete operativo) de un tipo de servicio 
+     * cambiando su estado a inactivo (activo = false).
      */
     public function destroy($id)
     {
@@ -98,20 +103,20 @@ class TipoServicioController extends Controller
     }
 
     /**
-     * Activar nuevamente.
+     * Reactiva un tipo de servicio previamente dado de baja lógica (activo = true).
      */
     public function activate($id)
-{
-    $tipo = TipoServicio::findOrFail($id);
-    $tipo->update(['activo' => true]);
+    {
+        $tipo = TipoServicio::findOrFail($id);
+        $tipo->update(['activo' => true]);
 
-    return redirect()->route('admin.TipoServicios.index')
+        return redirect()->route('admin.TipoServicios.index')
                      ->with('success','Tipo de servicio activado correctamente.');
-}
-
+    }
 
     /**
-     * Tipos de servicio por sucursal (para combos dinámicos).
+     * Endpoint API / AJAX: Retorna en formato JSON los tipos de servicio pertenecientes 
+     * a una sucursal específica que estén activos (utilizado para selects dinámicos en cascada).
      */
     public function porSucursal($sucursalId)
     {
@@ -120,20 +125,23 @@ class TipoServicioController extends Controller
                              ->get(['id','nombre']);
         return response()->json($tipos);
     }
+
+    /**
+     * Vista pública: Muestra el detalle de un tipo de servicio activo específico 
+     * junto con todos los servicios activos que le pertenecen.
+     */
     public function showPublic($id)
-{
-    // Buscar el tipo de servicio (aunque esté borrado lógico)
-    $tipo = \App\Models\TipoServicio::where('id', $id)
-                                    ->where('activo', true) // solo activos
+    {
+        // Busca el tipo de servicio asegurándose de que esté activo
+        $tipo = \App\Models\TipoServicio::where('id', $id)
+                                    ->where('activo', true)
                                     ->firstOrFail();
 
-    // Traer todos los servicios activos de este tipo
-    $servicios = \App\Models\Servicio::where('tipo_servicio_id', $id)
-                                     ->where('activo', true)
-                                     ->get();
+        // Carga todos los servicios activos asociados a este tipo de servicio
+        $servicios = \App\Models\Servicio::where('tipo_servicio_id', $id)
+                                   ->where('activo', true)
+                                   ->get();
 
-  return view('usuario.tiposervicios.show', compact('tipo', 'servicios'));
-
-}
-
+        return view('usuario.tiposervicios.show', compact('tipo', 'servicios'));
+    }
 }

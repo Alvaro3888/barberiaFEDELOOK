@@ -513,10 +513,10 @@
                 <p class="small text-uppercase text-white-50" style="letter-spacing: 0.2em; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">BARBERÍA PROFESIONAL</p>
             </div>
 
-            <!-- Botón de acción con fuerte presencia visual -->
-            <div class="d-flex justify-content-center">
-                <a href="{{ route('usuario.catalogo') }}" class="btn hero-button px-5 py-3 fw-bold shadow-lg text-uppercase" style="letter-spacing: 0.05em; font-size: 0.95rem;">Reservar turno</a>
-            </div>
+            <!-- Botón de acción con fuerte presencia visual y efecto hover -->
+<div class="d-flex justify-content-center">
+    <a href="{{ route('usuario.catalogo') }}" class="btn bg-white text-dark border-0 px-5 py-3 fw-bold shadow-lg text-uppercase text-decoration-none" style="letter-spacing: 0.05em; font-size: 0.95rem; border-radius: 6px; transition: all 0.25s ease;" onmouseover="this.style.backgroundColor='#f1f1f1'; this.style.transform='translateY(-2px)';" onmouseout="this.style.backgroundColor='#ffffff'; this.style.transform='translateY(0)';">Reservar turno</a>
+</div>
 
         </div>
     </section>

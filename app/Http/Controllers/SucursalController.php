@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\Mail;
 
 class SucursalController extends Controller
 {
+    /**
+     * Muestra la vista pública de sucursales activas junto con los testimonios aprobados 
+     * (calificaciones reales de 4 o 5 estrellas y estado activo).
+     */
     public function publicIndex()
     {
         $sucursales = Sucursal::where('activo', 1)->get();
@@ -17,13 +21,17 @@ class SucursalController extends Controller
         // Traer únicamente calificaciones activas de 4 o 5 estrellas para mostrarlas en la vista pública
         $testimonios = Calificacion::with(['cliente', 'turno.servicio', 'turno.barbero'])
             ->whereIn('puntuacion', [4, 5])
-            ->where('activo', 1) // <--- ESTO ES LO QUE FALTABA
+            ->where('activo', 1) // Filtro de moderación para asegurar visibilidad de comentarios válidos
             ->latest('created_at')
             ->get();
 
         return view('usuario.sucursales.index', compact('sucursales', 'testimonios'));
     }
 
+    /**
+     * Listado general de sucursales en el panel administrativo.
+     * Permite filtrar por nombre o dirección y soporta peticiones AJAX para tablas dinámicas.
+     */
     public function index(Request $request)
     {
         $query = Sucursal::query();
@@ -45,11 +53,18 @@ class SucursalController extends Controller
         return view('admin.sucursales.index', compact('sucursales'));
     }
 
+    /**
+     * Muestra el formulario de creación de una nueva sucursal.
+     */
     public function create()
     {
         return view('admin.sucursales.create');
     }
 
+    /**
+     * Almacena una nueva sucursal previa validación de sus datos.
+     * Gestiona la subida opcional de una imagen representativa al disco de almacenamiento público.
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -73,12 +88,19 @@ class SucursalController extends Controller
                        ->with('success', 'Sucursal creada correctamente.');
     }
 
+    /**
+     * Carga el formulario de edición con los datos de una sucursal específica.
+     */
     public function edit($id)
     {
         $sucursal = Sucursal::findOrFail($id);
         return view('admin.sucursales.edit', compact('sucursal'));
     }
 
+    /**
+     * Actualiza la información de una sucursal existente.
+     * Si se sube una imagen nueva, elimina la anterior del almacenamiento público para liberar espacio.
+     */
     public function update(Request $request, $id)
     {
         $sucursal = Sucursal::findOrFail($id);
@@ -95,6 +117,7 @@ class SucursalController extends Controller
         $data = $request->only(['nombre', 'direccion', 'telefono', 'horarios', 'mapa_url']);
 
         if ($request->hasFile('imagen')) {
+            // Elimina la imagen anterior si ya existía registrada en el disco público
             if ($sucursal->imagen && Storage::disk('public')->exists($sucursal->imagen)) {
                 Storage::disk('public')->delete($sucursal->imagen);
             }
@@ -109,6 +132,9 @@ class SucursalController extends Controller
                        ->with('success', 'Sucursal actualizada correctamente.');
     }
 
+    /**
+     * Realiza una baja lógica de una sucursal cambiando su estado a inactivo (activo = false).
+     */
     public function destroy($id)
     {
         $sucursal = Sucursal::findOrFail($id);
@@ -119,6 +145,9 @@ class SucursalController extends Controller
             ->with('success', 'Sucursal desactivada correctamente.');
     }
 
+    /**
+     * Reactiva una sucursal previamente desactivada (activo = true).
+     */
     public function activate($id)
     {
         $sucursal = Sucursal::findOrFail($id);
@@ -129,6 +158,10 @@ class SucursalController extends Controller
             ->with('success', 'Sucursal activada correctamente.');
     }
 
+    /**
+     * Procesa y envía un correo electrónico de consulta o contacto corporativo 
+     * completado por un usuario desde la web hacia la casilla de la administración central (`fedelookweb@gmail.com`).
+     */
     public function enviarContacto(Request $request)
     {
         $request->validate([
@@ -146,6 +179,7 @@ class SucursalController extends Controller
 
         $datos = $request->only(['nombre', 'email', 'telefono', 'sucursal_id', 'mensaje']);
 
+        // Determina el nombre de la sucursal seleccionada o asigna una consulta general por defecto
         $sucursalNombre = 'Consulta general / Oficina central';
         if (!empty($datos['sucursal_id'])) {
             $sucursal = Sucursal::find($datos['sucursal_id']);
@@ -155,6 +189,7 @@ class SucursalController extends Controller
         }
 
         try {
+            // Envío del correo usando una vista de plantilla Blade dedicada ('emails.contacto')
             Mail::send('emails.contacto', [
                 'datos' => $datos,
                 'sucursalNombre' => $sucursalNombre
@@ -165,6 +200,7 @@ class SucursalController extends Controller
 
             return redirect()->back()->with('success', '¡Gracias por comunicarte! Tu mensaje fue enviado con éxito a la administración.');
         } catch (\Exception $e) {
+            // Registro de error en logs y manejo de excepción ante fallas del servidor de correo
             \Log::error('Error al enviar correo de contacto: ' . $e->getMessage());
             return redirect()->back()->with('error', 'No se pudo enviar el mensaje en este momento. Por favor intentá nuevamente.');
         }

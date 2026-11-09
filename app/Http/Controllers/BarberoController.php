@@ -9,16 +9,22 @@ use Carbon\Carbon;
 
 class BarberoController extends Controller
 {
+    /**
+     * Muestra el panel operativo del barbero autenticado con sus turnos filtrados y segmentados 
+     * en tres bloques temporales inteligentes: Turnos de Hoy, Futuros y Finalizados/Vencidos.
+     * Soporta peticiones AJAX para actualización dinámica de tablas.
+     */
     public function misTurnosBarbero(Request $request)
     {
         $barberoId = auth()->id();
         $hoy = Carbon::today()->toDateString();
         $ahora = Carbon::now();
 
-        // Aseguramos cargar la relación 'servicio' para leer su duración
+        // Aseguramos cargar la relación 'servicio' para leer su duración exacta en minutos
         $query = Turno::with(['cliente', 'servicio', 'sucursal'])
             ->where('barbero_id', $barberoId);
 
+        // Filtro opcional por nombre o email del cliente
         if ($request->filled('cliente')) {
             $query->whereHas('cliente', function ($q) use ($request) {
                 $q->where('nombre', 'like', '%' . $request->cliente . '%')
@@ -26,17 +32,19 @@ class BarberoController extends Controller
             });
         }
 
+        // Filtro opcional por fecha específica
         if ($request->filled('fecha')) {
             $query->whereDate('fecha', $request->fecha);
         }
 
+        // Filtro opcional por estado del turno
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
         }
 
         $todosLosTurnos = $query->get();
 
-        // Turnos de HOY (Permanecen aquí hasta que termine la hora de fin del servicio)
+        // 1. Turnos de HOY (Permanecen aquí activos hasta que termine formalmente la hora de fin del servicio)
         $turnosHoy = $todosLosTurnos->filter(function ($t) use ($hoy, $ahora) {
             if ($t->fecha !== $hoy || in_array($t->estado, ['completado', 'cancelado'])) {
                 return false;
@@ -46,13 +54,13 @@ class BarberoController extends Controller
             $duracionMinutos = $t->servicio->duracion ?? 30;
             $finTurno = (clone $inicioTurno)->addMinutes($duracionMinutos);
 
-            // El turno sigue en "Hoy" siempre y cuando aún no haya terminado su horario de fin
+            // El turno sigue en "Hoy" siempre y cuando la hora actual sea menor o igual al horario de finalización
             return $ahora->lte($finTurno);
         })->sortBy(function ($t) {
             return $t->fecha . ' ' . $t->hora;
         });
 
-        // Turnos FUTUROS (Días posteriores)
+        // 2. Turnos FUTUROS (Correspondientes a días posteriores al día de hoy)
         $turnosFuturos = $todosLosTurnos->filter(function ($t) use ($hoy) {
             return $t->fecha > $hoy 
                 && !in_array($t->estado, ['completado', 'cancelado']);
@@ -60,7 +68,7 @@ class BarberoController extends Controller
             return $t->fecha . ' ' . $t->hora;
         });
 
-        // Turnos TERMINADOS / VENCIDOS (Ya pasó su horario de fin o fueron completados/cancelados)
+        // 3. Turnos TERMINADOS / VENCIDOS (Aquellos cuya hora de fin ya transcurrió hoy, fechas pasadas, o estados completados/cancelados)
         $turnosFinalizados = $todosLosTurnos->filter(function ($t) use ($hoy, $ahora) {
             $inicioTurno = Carbon::parse($t->fecha . ' ' . $t->hora);
             $duracionMinutos = $t->servicio->duracion ?? 30;
@@ -75,6 +83,7 @@ class BarberoController extends Controller
             return $t->fecha . ' ' . $t->hora;
         });
 
+        // Retorno condicional si la petición es asíncrona (AJAX) para refrescar parciales de vistas
         if ($request->ajax()) {
             return view('barbero.partials.tabla_turnos', compact('turnosHoy', 'turnosFuturos', 'turnosFinalizados'))->render();
         }
@@ -82,15 +91,21 @@ class BarberoController extends Controller
         return view('barbero.dashboard_barbero', compact('turnosHoy', 'turnosFuturos', 'turnosFinalizados'));
     }
 
+    /**
+     * Calcula las estadísticas de rendimiento y progreso del barbero autenticado 
+     * según rangos temporales (hoy, semana, mes, año), desglosando volumen de turnos, 
+     * canales online vs mostrador y tasa de efectividad de atención.
+     */
     public function progresoBarbero(Request $request)
     {
         $barbero = auth()->user(); 
         $barberoId = $barbero->id;
 
-        $rango = $request->input('rango', 'mes'); 
+        $rango = $request->input('rango', 'mes'); // Por defecto evalúa el mes actual
 
         $query = Turno::where('barbero_id', $barberoId);
 
+        // Aplicación del filtro temporal según el rango solicitado
         if ($rango === 'hoy') {
             $query->whereDate('fecha', now()->today());
         } elseif ($rango === 'semana') {
@@ -107,9 +122,11 @@ class BarberoController extends Controller
         $pendientes  = (clone $query)->whereIn('estado', ['pendiente', 'confirmado'])->count();
         $cancelados  = (clone $query)->where('estado', 'cancelado')->count();
 
+        // Diferenciación de canales: Online (Mercado Pago) vs Mostrador/Presencial
         $online = (clone $query)->get()->filter(fn($t) => method_exists($t, 'esPagoOnline') && $t->esPagoOnline())->count();
         $mostrador = $totalTurnos - $online;
 
+        // Cálculo de la efectividad de atención porcentual (turnos completados sobre el total)
         $efectividad = $totalTurnos > 0 ? round(($completados / $totalTurnos) * 100, 1) : 0;
 
         return view('barbero.progreso', compact(

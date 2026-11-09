@@ -1,16 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid py-4" style="background-color: #f4f7f6; min-height: 100vh;">
+<div class="container-fluid py-4 py-md-5 px-lg-4" style="background-color: #f4f7f6; min-height: 100vh;">
     
     <!-- Header moderno y Buscador -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3 animate-fade-in">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom animate-fade-in gap-3">
         <div class="d-flex align-items-center gap-3">
-            <span class="p-2 text-white rounded-3 shadow-sm brand-icon-container" style="background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%);">
+            <span class="p-2 text-white rounded-3 shadow-sm brand-icon-container btn-no-select" style="background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%);">
                 <img src="{{ asset('logos/cortebarba2.png') }}" alt="Logo" class="logo-header-inline">
             </span>
             <div>
-                <h2 class="h4 fw-bold text-dark mb-1">Catálogo de Servicios</h2>
+                <h1 class="h4 fw-bold text-dark mb-1">Catálogo de Servicios</h1>
                 <p class="text-muted small mb-0">Gestión avanzada, filtrado y visualización de todo el catálogo de barbería.</p>
             </div>
         </div>
@@ -20,14 +20,14 @@
                 <span class="input-group-text bg-white border-0 text-muted ps-3"><i class="bi bi-search"></i></span>
                 <input type="text" id="buscadorServicios" class="form-control border-0 ps-2 py-2 fs-6 shadow-none" placeholder="Buscar servicio..." autocomplete="off">
             </div>
-            <a href="{{ route('admin.servicios.create') }}" class="btn px-4 py-2 font-weight-bold shadow-sm d-inline-flex align-items-center gap-2 btn-video-glow rounded-pill text-white text-nowrap" style="background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%); border: none;">
+            <a href="{{ route('admin.servicios.create') }}" class="btn px-4 py-2 font-weight-bold shadow-sm d-inline-flex align-items-center gap-2 btn-video-glow rounded-pill text-white text-nowrap btn-no-select transition-all" style="background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%); border: none;">
                 <i class="bi bi-plus-lg"></i> Nuevo servicio
             </a>
         </div>
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4 animate-fade-in" role="alert" style="background-color: #d1fae5; color: #065f46;">
+        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4 animate-fade-in rounded-4" role="alert" style="background-color: #E8F5F3; color: #0F746E;">
             <i class="bi bi-check-circle-fill fs-5 me-2"></i>
             <span>{{ session('success') }}</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -36,7 +36,7 @@
 
     <!-- 🔹 ORGANIZACIÓN POR TIPO DE SERVICIO (ACORDEÓN MODERNO) -->
     @php
-        $serviciosOrdenados = $servicios->sortByDesc('id');
+        $serviciosOrdenados = isset($servicios) ? $servicios->sortByDesc('id') : collect();
         $serviciosAgrupados = $serviciosOrdenados->groupBy(function($servicio) {
             return $servicio->tipoServicio ? $servicio->tipoServicio->nombre : 'Sin Categoría / Tipo';
         });
@@ -44,7 +44,7 @@
 
     <div class="accordion" id="accordionServicios">
         @forelse($serviciosAgrupados as $tipoNombre => $serviciosDelTipo)
-            <div class="card border-0 shadow-sm mb-3 rounded-4 overflow-hidden card-modern">
+            <div class="card border-0 shadow-sm mb-3 rounded-4 overflow-hidden card-modern bg-white">
                 <!-- Cabecera de la Sección / Grupo -->
                 <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center" 
                      data-bs-toggle="collapse" 
@@ -55,7 +55,7 @@
                             <i class="bi bi-folder2-open fs-5"></i>
                         </div>
                         <h5 class="mb-0 fw-bold text-dark fs-6">{{ $tipoNombre }}</h5>
-                        <span class="badge bg-teal-soft text-teal border border-teal-subtle ms-2 px-2.5 py-1 rounded-pill" style="font-size: 0.7rem;">{{ $serviciosDelTipo->count() }} servicios</span>
+                        <span class="badge bg-teal-soft text-teal border border-teal-subtle ms-2 px-2.5 py-1 rounded-pill btn-no-select" style="font-size: 0.7rem;">{{ $serviciosDelTipo->count() }} servicios</span>
                     </div>
                     <i class="bi bi-chevron-down text-muted transition-chevron"></i>
                 </div>
@@ -80,7 +80,7 @@
                                                         <i class="bi bi-image fs-4 opacity-50"></i>
                                                     </div>
                                                 @endif
-                                                <span class="position-absolute top-0 start-0 m-2 badge {{ $servicio->activo ? 'bg-success' : 'bg-secondary' }} px-2 py-1 shadow-xs rounded-pill" style="font-size: 0.60rem;">
+                                                <span class="position-absolute top-0 start-0 m-2 badge {{ $servicio->activo ? 'bg-success' : 'bg-secondary' }} px-2 py-1 shadow-xs rounded-pill btn-no-select" style="font-size: 0.60rem;">
                                                     {{ $servicio->activo ? 'Activo' : 'Inactivo' }}
                                                 </span>
                                             </div>
@@ -106,24 +106,25 @@
                                             </div>
                                         </div>
 
-                                        <!-- Botones de Acción Estilizados en la Base -->
+                                        <!-- Botones de Acción Estilizados en la Base con Spinner de Tijeras -->
                                         <div class="card-footer bg-white border-top py-2.5 px-3 d-flex gap-2">
-                                            <a href="{{ route('admin.servicios.edit', $servicio->id) }}" class="btn btn-outline-info btn-sm flex-grow-1 py-1.5 fw-semibold rounded-pill d-flex align-items-center justify-content-center gap-1" style="font-size: 0.75rem;">
+                                            <a href="{{ route('admin.servicios.edit', $servicio->id) }}" class="btn btn-outline-info btn-sm flex-grow-1 py-1.5 fw-semibold rounded-pill d-flex align-items-center justify-content-center gap-1 btn-no-select" style="font-size: 0.75rem;">
                                                 <i class="bi bi-pencil"></i> Editar
                                             </a>
                                             @if($servicio->activo)
-                                                <form action="{{ route('admin.servicios.destroy', $servicio->id) }}" method="POST" class="flex-grow-1 m-0" onsubmit="return confirm('¿Seguro que deseas desactivar este servicio?');">
+                                                <form action="{{ route('admin.servicios.destroy', $servicio->id) }}" method="POST" class="flex-grow-1 m-0 form-action-prevent" onsubmit="return confirm('¿Seguro que deseas desactivar este servicio?');">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100 py-1.5 fw-semibold rounded-pill d-flex align-items-center justify-content-center gap-1" style="font-size: 0.75rem;">
-                                                        <i class="bi bi-eye-slash"></i> Desactivar
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100 py-1.5 fw-semibold rounded-pill d-flex align-items-center justify-content-center gap-1 btn-with-scissors btn-no-select" style="font-size: 0.75rem;">
+                                                        <span class="btn-text"><i class="bi bi-eye-slash"></i> Desactivar</span>
                                                     </button>
                                                 </form>
                                             @else
-                                                <form action="{{ route('admin.servicios.activate', $servicio->id) }}" method="POST" class="flex-grow-1 m-0" onsubmit="return confirm('¿Seguro que deseas activar este servicio?');">
+                                                <form action="{{ route('admin.servicios.activate', $servicio->id) }}" method="POST" class="flex-grow-1 m-0 form-action-prevent" onsubmit="return confirm('¿Seguro que deseas activar este servicio?');">
                                                     @csrf
-                                                    <button type="submit" class="btn btn-outline-success btn-sm w-100 py-1.5 fw-semibold rounded-pill d-flex align-items-center justify-content-center gap-1" style="font-size: 0.75rem;">
-                                                        <i class="bi bi-eye"></i> Activar
+                                                    @method('PATCH')
+                                                    <button type="submit" class="btn btn-outline-success btn-sm w-100 py-1.5 fw-semibold rounded-pill d-flex align-items-center justify-content-center gap-1 btn-with-scissors btn-no-select" style="font-size: 0.75rem;">
+                                                        <span class="btn-text"><i class="bi bi-eye"></i> Activar</span>
                                                     </button>
                                                 </form>
                                             @endif
@@ -147,6 +148,21 @@
 </div>
 
 <style>
+    .text-teal { color: #0d9488 !important; }
+    .transition-all { transition: all 0.2s ease; }
+    .card-modern {
+        box-shadow: 0 0.75rem 1.5rem rgba(18, 38, 63, 0.04) !important;
+        border: none;
+    }
+    .card-servicio-hover {
+        transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        border: 1px solid #f1f3f5 !important;
+    }
+    .card-servicio-hover:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 0.75rem 1.5rem rgba(13, 148, 136, 0.1) !important;
+        border-color: #ccfbf1 !important;
+    }
     .logo-header-inline {
         width: 20px;
         height: 20px;
@@ -163,19 +179,6 @@
     .brand-icon-container:hover .logo-header-inline {
         transform: scale(1.18) rotate(-8deg);
     }
-    .card-modern {
-        box-shadow: 0 0.75rem 1.5rem rgba(18, 38, 63, 0.04) !important;
-        border: none;
-    }
-    .card-servicio-hover {
-        transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-        border: 1px solid #f1f3f5 !important;
-    }
-    .card-servicio-hover:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 0.75rem 1.5rem rgba(13, 148, 136, 0.1) !important;
-        border-color: #ccfbf1 !important;
-    }
     .btn-video-glow {
         transition: all 0.3s ease;
         box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
@@ -184,14 +187,26 @@
         transform: translateY(-2px) scale(1.02);
         box-shadow: 0 6px 20px rgba(13, 148, 136, 0.4);
     }
-    .text-teal {
-        color: #0d9488 !important;
-    }
     .bg-teal-soft {
         background-color: #f0fdfa !important;
     }
     .border-teal-subtle {
         border-color: #ccfbf1 !important;
+    }
+    .btn-no-select {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+    /* Spinner de Tijeras Animadas */
+    .scissors-loader {
+        display: inline-block;
+        animation: scissorsSpin 0.9s linear infinite;
+    }
+    @keyframes scissorsSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(-8px); }
@@ -202,7 +217,7 @@
     }
 </style>
 
-<!-- Script para Buscador en Tiempo Real Blindado -->
+<!-- Script para Buscador, Anti-doble clic y Spinner de Tijeras -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const inputBuscador = document.getElementById('buscadorServicios');
@@ -218,6 +233,34 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 400);
         });
     }
+
+    // Prevenir selección de texto accidental en botones
+    document.querySelectorAll('.btn-no-select').forEach(btn => {
+        btn.addEventListener('mousedown', function (e) {
+            if (e.detail > 1) e.preventDefault();
+        });
+    });
+
+    // SISTEMA ANTI-DOBLE CLIC Y SPINNER DE TIJERAS INTELIGENTE (Retraso de 250ms)
+    document.addEventListener('submit', function (e) {
+        const form = e.target;
+        if (form.classList.contains('form-action-prevent')) {
+            const submitBtn = form.querySelector('.btn-with-scissors');
+            if (submitBtn && !submitBtn.disabled) {
+                submitBtn.disabled = true;
+                const textSpan = submitBtn.querySelector('.btn-text');
+                if (textSpan) {
+                    textSpan.dataset.original = textSpan.innerHTML;
+                    
+                    let spinnerTimer = setTimeout(() => {
+                        textSpan.innerHTML = `<i class="bi bi-scissors scissors-loader me-1"></i> Procesando...`;
+                    }, 250);
+
+                    window.addEventListener('beforeunload', () => clearTimeout(spinnerTimer));
+                }
+            }
+        }
+    });
 
     if (inputBuscador) {
         // Bloqueo de números por tecla en el buscador

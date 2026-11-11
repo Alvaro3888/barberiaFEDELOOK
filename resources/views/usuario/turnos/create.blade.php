@@ -345,7 +345,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     validarBotonConfirmar();
 
                     barberoAgenda.className = "alert alert-success py-2 px-3 mt-2 mb-0 small fw-medium border-success text-dark";
-                    barberoAgenda.innerHTML = `✅ Sugerencia inteligente aplicada: Primer horario disponible seleccionado.`;
+                    barberoAgenda.innerHTML = `✅ Este barbero tiene horario disponible.`;
                     barberoAgenda.classList.remove('d-none');
                 } else {
                     horaInput.innerHTML = '<option value="">No hay horarios libres para esta duración</option>';

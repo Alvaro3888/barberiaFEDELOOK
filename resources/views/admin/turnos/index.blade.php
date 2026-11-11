@@ -155,6 +155,8 @@
                     </h5>
                 </div>
                 
+                <!-- CONTENEDOR MÓVIL CON SCROLL VERTICAL LIMITADO -->
+                <div class="d-block d-md-none mb-4" style="max-height: 550px; overflow-y: auto; padding-right: 4px;">
                 @foreach($seccion['lista'] as $turno)
                     @php
                         $fechaHoraTurno = \Carbon\Carbon::parse($turno->fecha . ' ' . $turno->hora);
@@ -178,8 +180,8 @@
                         };
                     @endphp
 
-                    <!-- VISTA MÓVIL -->
-                    <div class="card border-0 shadow-sm rounded-4 mb-3 p-3 bg-white d-block d-md-none">
+                    <!-- TARJETA MÓVIL INDIVIDUAL -->
+                    <div class="card border-0 shadow-sm rounded-4 mb-3 p-3 bg-white">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div>
                                 <span class="badge bg-light text-dark border font-monospace px-2 py-1 mb-1">
@@ -240,7 +242,6 @@
                                 @endif
 
                                 @if($turno->pago && $turno->pago->payment_id_mp)
-                                    {{-- Botón para Turno Online con Reembolso API MP --}}
                                     <button type="button" 
                                             class="btn btn-sm btn-danger fw-bold rounded-pill px-3 py-1 shadow-sm d-inline-flex align-items-center gap-1" 
                                             data-bs-toggle="modal" 
@@ -248,7 +249,6 @@
                                         <i class="bi bi-cash-coin"></i> Reembolsar
                                     </button>
                                 @else
-                                    {{-- CRUD Libre Desktop / Mostrador --}}
                                     @if(!$yaPasoLaHora)
                                         <button type="button" 
                                                 class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold btn-editar-turno"
@@ -279,11 +279,12 @@
                         </div>
                     </div>
                 @endforeach
+                </div>
 
-                <!-- VISTA ESCRITORIO -->
+                <!-- VISTA ESCRITORIO / TABLA RESPONSIVE CON SCROLL SUAVE -->
                 <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white d-none d-md-block">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                    <div class="table-responsive" style="-webkit-overflow-scrolling: touch;">
+                        <table class="table table-hover align-middle mb-0 text-nowrap">
                             <thead class="text-white" style="background: linear-gradient(135deg, #111827 0%, #1f2937 100%);">
                                 <tr>
                                     <th class="py-3 px-4">Fecha y Hora</th>
@@ -385,7 +386,6 @@
                                                 @endif
 
                                                 @if($turno->pago && $turno->pago->payment_id_mp)
-                                                    {{-- Botón para Turno Online con Reembolso API MP --}}
                                                     <button type="button" 
                                                             class="btn btn-sm btn-danger fw-bold rounded-pill px-3 py-1 shadow-sm d-inline-flex align-items-center gap-1" 
                                                             data-bs-toggle="modal" 
@@ -394,7 +394,6 @@
                                                         <i class="bi bi-cash-coin"></i> <span class="small">Reembolsar</span>
                                                     </button>
                                                 @else
-                                                    {{-- CRUD Libre Desktop / Mostrador --}}
                                                     @if(!$yaPasoLaHora)
                                                         <button type="button" 
                                                                 class="btn btn-sm btn-light text-primary border shadow-sm rounded-circle p-1 d-flex align-items-center justify-content-center btn-editar-turno"
@@ -580,7 +579,6 @@
                 
                 <div class="modal-footer bg-light px-4 py-3 border-top d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-outline-secondary btn-lg py-2 rounded-3 px-4 shadow-xs" data-bs-dismiss="modal">Cancelar</button>
-                    <!-- Botón con Validación AJAX Pre-flight y Tijeras -->
                     <button type="submit" id="btnGuardarTurno" class="btn btn-teal text-white btn-lg py-2 rounded-3 fw-bold shadow-sm px-4">Confirmar y Otorgar Turno</button>
                 </div>
             </form>
@@ -688,7 +686,6 @@
                 </div>
                 <div class="modal-footer bg-light px-4 py-3 border-top d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-outline-secondary btn-lg py-2 rounded-3 px-4 shadow-xs" data-bs-dismiss="modal">Cancelar</button>
-                    <!-- Botón de Edición con Tijeras -->
                     <button type="submit" id="btnGuardarEdicion" class="btn btn-teal text-white btn-lg py-2 rounded-3 fw-bold shadow-sm px-4">Guardar Cambios</button>
                 </div>
             </form>

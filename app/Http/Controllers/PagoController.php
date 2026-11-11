@@ -25,26 +25,40 @@ class PagoController extends Controller
                 ->with('error', 'No hay ninguna reserva en proceso.');
         }
 
-        // Configuración del Access Token de Mercado Pago desde las variables de entorno
         MercadoPagoConfig::setAccessToken(config('services.mercadopago.access_token'));
 
-        $precio = (float) str_replace(',', '.', $reserva['precio_historico']);
+        // 1. Buscamos todos los servicios seleccionados
+        $serviciosElegidos = \App\Models\Servicio::whereIn('id', $reserva['servicios'] ?? [])->get();
+
+        // 2. Creamos un texto detallado que liste los servicios (Ej: "Corte de Pelo + Perfilado de Barba")
+        $detallesArray = [];
+        foreach ($serviciosElegidos as $servicio) {
+            $detallesArray[] = "{$servicio->nombre} (\${$servicio->precio_actual})";
+        }
+
+        $tituloCompleto = !empty($detallesArray) 
+            ? implode(" + ", $detallesArray) 
+            : "Reserva de Turno Múltiple";
+
+        $precioTotal = (float) str_replace(',', '.', $reserva['precio_historico']);
 
         $client = new PreferenceClient();
 
-        // Creación de la preferencia con ítems, pagador genérico de pruebas y URLs de retorno (Cloudflare Tunnel)
         $preference = $client->create([
             "items" => [
                 [
-                    "title"       => "Reserva de Turno: " . ($reserva['servicio_nombre'] ?? 'Corte de Pelo'),
+                    "title"       => $tituloCompleto, // <-- Acá viaja todo el detalle unido para que salga en la web y en el PDF
+                    "description" => "Turno múltiple en barbería - Servicios agendados",
                     "quantity"    => 1,
-                    "unit_price"  => $precio,
+                    "unit_price"  => $precioTotal,
                     "currency_id" => "ARS"
                 ]
             ],
             "payer" => [
-                "email" => "test_user_12345678@testuser.com", // Email genérico para entorno Sandbox de pruebas
+                "email" => "test_user_12345678@testuser.com",
             ],
+            "statement_descriptor" => "BARBERIA ALVARO",
+            "binary_mode"          => true,
             "back_urls" => [
                 "success" => "https://genres-revealed-composed-retailer.trycloudflare.com/pago/success",
                 "failure" => "https://genres-revealed-composed-retailer.trycloudflare.com/pago/failure",
@@ -53,17 +67,10 @@ class PagoController extends Controller
             "auto_return" => "approved",
         ]);
 
-        // Obtenemos de forma segura la URL de pago (priorizando Sandbox si está configurado, o init_point por defecto)
         $urlPago = $preference->sandbox_init_point ?? $preference->init_point;
 
         return redirect($urlPago);
     }
-
-    /**
-     * Método ejecutado tras un pago exitoso retornado por Mercado Pago (Success URL).
-     * Valida la sesión, persiste formalmente el Turno confirmado en base de datos 
-     * y registra el comprobante de pago asociado capturando los IDs de auditoría de MP.
-     */
     public function success(Request $request)
     {
         $reserva = session('reserva');
@@ -84,6 +91,11 @@ class PagoController extends Controller
             'estado'           => 'confirmado',
             'precio_historico' => $reserva['precio_historico'],
         ]);
+
+        // ¡IMPORTANTE! Vincular los múltiples servicios en la tabla intermedia
+        if (!empty($reserva['servicios'])) {
+            $turno->servicios()->sync($reserva['servicios']);
+        }
 
         // 2. Registro del pago vinculado capturando los parámetros de respuesta devueltos por la pasarela
         Pago::create([

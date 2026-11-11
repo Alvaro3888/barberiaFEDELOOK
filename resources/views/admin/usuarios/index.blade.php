@@ -80,7 +80,7 @@
                         <tr class="fila-usuario transition-row">
                             <td class="nombre-usuario ps-4 py-3 fw-bold text-dark">{{ $usuario->nombre }}</td>
                             <td class="email-usuario py-3 text-dark">{{ $usuario->email }}</td>
-                            <td class="py-3 text-secondary">
+                            <td class="telefono-usuario py-3 text-secondary">
                                 @if($usuario->telefono)
                                     <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $usuario->telefono) }}" target="_blank" class="text-decoration-none text-success fw-bold d-inline-flex align-items-center gap-1" title="Abrir WhatsApp">
                                         💬 {{ $usuario->telefono }}
@@ -163,13 +163,15 @@
                     
                     <div class="mb-3 small text-secondary">
                         <strong>Tel:</strong> 
-                        @if($usuario->telefono)
-                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $usuario->telefono) }}" target="_blank" class="text-success fw-bold text-decoration-none">
-                                💬 {{ $usuario->telefono }}
-                            </a>
-                        @else
-                            <span class="text-muted fst-italic">Sin teléfono</span>
-                        @endif
+                        <span class="telefono-usuario">
+                            @if($usuario->telefono)
+                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $usuario->telefono) }}" target="_blank" class="text-success fw-bold text-decoration-none">
+                                    💬 {{ $usuario->telefono }}
+                                </a>
+                            @else
+                                <span class="text-muted fst-italic">Sin teléfono</span>
+                            @endif
+                        </span>
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 border-top pt-2">
@@ -293,7 +295,7 @@
 <!-- ================= SCRIPTS DE FILTRADO, VALIDACIÓN Y MODAL ================= -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Filtro instantáneo en vivo
+    // Filtro instantáneo en vivo (Nombre, Email y Teléfono)
     const inputBuscar = document.getElementById('buscar');
     const filasUsuarios = document.querySelectorAll('.fila-usuario');
 
@@ -303,14 +305,16 @@ document.addEventListener('DOMContentLoaded', function() {
             filasUsuarios.forEach(fila => {
                 const nombreEl = fila.querySelector('.nombre-usuario');
                 const emailEl = fila.querySelector('.email-usuario');
-                if (nombreEl && emailEl) {
-                    const nombre = nombreEl.textContent.toLowerCase();
-                    const email = emailEl.textContent.toLowerCase();
-                    if (nombre.includes(textoBusqueda) || email.includes(textoBusqueda)) {
-                        fila.style.display = '';
-                    } else {
-                        fila.style.display = 'none';
-                    }
+                const telefonoEl = fila.querySelector('.telefono-usuario');
+
+                const nombre = nombreEl ? nombreEl.textContent.toLowerCase() : '';
+                const email = emailEl ? emailEl.textContent.toLowerCase() : '';
+                const telefono = telefonoEl ? telefonoEl.textContent.toLowerCase() : '';
+
+                if (nombre.includes(textoBusqueda) || email.includes(textoBusqueda) || telefono.includes(textoBusqueda)) {
+                    fila.style.display = '';
+                } else {
+                    fila.style.display = 'none';
                 }
             });
         });
@@ -370,10 +374,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Aplicar blindaje a los inputs de nombre
+    // Aplicar blindaje a los inputs de nombre de crear y editar
     blindarSoloLetras(document.getElementById('nombre_crear'));
-    const editNombreInput = document.getElementById('edit_nombre');
-    blindarSoloLetras(editNombreInput);
+    blindarSoloLetras(document.getElementById('edit_nombre'));
 
     // Rellenar dinámicamente el modal de edición
     const botonesEditar = document.querySelectorAll('.btn-editar');

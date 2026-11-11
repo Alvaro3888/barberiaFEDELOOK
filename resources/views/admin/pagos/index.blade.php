@@ -283,6 +283,58 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // 1. Blindaje para solo Letras y Espacios (Cliente)
+    function blindarSoloLetras(elemento) {
+        if (!elemento) return;
+        elemento.addEventListener('keypress', function(e) {
+            const charStr = String.fromCharCode(e.which ? e.which : e.keyCode);
+            if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]$/.test(charStr)) {
+                e.preventDefault();
+            }
+        });
+        elemento.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const textoPegado = (e.clipboardData || window.clipboardData).getData('text');
+            const textoLimpio = textoPegado.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+            this.value = this.value.substring(0, start) + textoLimpio + this.value.substring(end);
+            this.setSelectionRange(start + textoLimpio.length, start + textoLimpio.length);
+            filtrarTabla();
+        });
+        elemento.addEventListener('input', function() {
+            this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+        });
+    }
+
+    // 2. Blindaje para solo Números (Payment ID)
+    function blindarSoloNumeros(elemento) {
+        if (!elemento) return;
+        elemento.addEventListener('keypress', function(e) {
+            const charStr = String.fromCharCode(e.which ? e.which : e.keyCode);
+            if (!/^[0-9]$/.test(charStr)) {
+                e.preventDefault();
+            }
+        });
+        elemento.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const textoPegado = (e.clipboardData || window.clipboardData).getData('text');
+            const textoLimpio = textoPegado.replace(/[^0-9]/g, '');
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+            this.value = this.value.substring(0, start) + textoLimpio + this.value.substring(end);
+            this.setSelectionRange(start + textoLimpio.length, start + textoLimpio.length);
+            filtrarTabla();
+        });
+        elemento.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    }
+
+    // Aplicar los blindajes a los inputs correspondientes
+    blindarSoloLetras(inputCliente);
+    blindarSoloNumeros(inputPayment);
+
     function filtrarTabla() {
         const valCliente = inputCliente.value.toLowerCase().trim();
         const valServicio = selectServicio.value.toLowerCase().trim();

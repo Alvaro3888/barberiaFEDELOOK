@@ -137,6 +137,9 @@
         font-weight: 700;
         border-bottom: 2px solid #e2e8f0;
         letter-spacing: 0.03em;
+        position: sticky;
+        top: 0;
+        z-index: 10;
     }
 </style>
 
@@ -359,7 +362,7 @@
         <div class="flex-grow-1 border-bottom border-light"></div>
     </div>
 
-    <!-- 4. TABLA DE ÚLTIMOS MOVIMIENTOS -->
+    <!-- 4. TABLA DE ÚLTIMOS MOVIMIENTOS (VISTA DUAL: TARJETAS EN MÓVIL CON SCROLL + TABLA EN ESCRITORIO) -->
     <div class="dashboard-card-container p-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
@@ -371,8 +374,67 @@
                 <i class="bi bi-arrow-right"></i>
             </a>
         </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 table-modern" style="font-size: 0.85rem;">
+
+        <!-- ================= VISTA MÓVIL: TARJETAS CON SCROLL VERTICAL LIMITADO ================= -->
+        <div class="d-block d-md-none" style="max-height: 480px; overflow-y: auto; padding-right: 4px;">
+            @forelse($turnos as $turno)
+                @php
+                    $badgeEstadoMovil = match($turno->estado) {
+                        'completado' => 'bg-success-subtle text-success border border-success-subtle',
+                        'cancelado'  => 'bg-danger-subtle text-danger border border-danger-subtle',
+                        'confirmado' => 'bg-info-subtle text-info border border-info-subtle fw-semibold',
+                        'pendiente'  => 'bg-warning-subtle text-warning border border-warning-subtle fw-semibold',
+                        default      => 'bg-light text-dark border'
+                    };
+                @endphp
+                <div class="card border-0 shadow-xs rounded-4 mb-3 p-3 bg-light border">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <span class="badge bg-white text-dark border font-monospace px-2 py-1 mb-1">
+                                <i class="bi bi-calendar-event me-1"></i> {{ \Carbon\Carbon::parse($turno->fecha)->format('d/m/Y') }} - {{ substr($turno->hora, 0, 5) }} hs
+                            </span>
+                            <h6 class="fw-bold text-dark mb-0">
+                                <i class="bi bi-person me-1 text-secondary"></i> {{ $turno->cliente_nombre_manual ?? $turno->cliente->nombre ?? 'Cliente Ocasional' }}
+                            </h6>
+                        </div>
+                        <div>
+                            <span class="badge {{ $badgeEstadoMovil }} px-2 py-1 rounded-pill">{{ ucfirst($turno->estado) }}</span>
+                        </div>
+                    </div>
+
+                    <div class="small text-muted mb-2 border-top border-bottom py-2 my-2">
+                        <div class="row g-1">
+                            <div class="col-6">
+                                <strong>Sucursal:</strong> {{ $turno->sucursal->nombre ?? 'N/A' }}
+                            </div>
+                            <div class="col-6">
+                                <strong>Canal:</strong> 
+                                @if(!empty($turno->cliente_nombre_manual) || ($turno->cliente && $turno->cliente->email === 'mostrador@barberia.com'))
+                                    <span class="text-secondary fw-semibold">Desktop</span>
+                                @else
+                                    <span class="text-petrol fw-semibold">Web</span>
+                                @endif
+                            </div>
+                            <div class="col-12 mt-1">
+                                <strong>Barbero:</strong> {{ $turno->barbero->nombre ?? 'N/A' }}
+                            </div>
+                            <div class="col-12 mt-1">
+                                <strong>Servicio:</strong> {{ $turno->servicio->nombre ?? 'N/A' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-inbox fs-2 text-muted opacity-50 mb-2 d-block"></i>
+                    <span>No hay registros para los filtros seleccionados.</span>
+                </div>
+            @endforelse
+        </div>
+
+        <!-- ================= VISTA ESCRITORIO: TABLA CON SCROLL VERTICAL Y HORIZONTAL ================= -->
+        <div class="d-none d-md-block table-responsive" style="max-height: 420px; overflow-y: auto; -webkit-overflow-scrolling: touch;">
+            <table class="table table-hover align-middle mb-0 table-modern text-nowrap" style="font-size: 0.85rem;">
                 <thead>
                     <tr>
                         <th class="py-3 ps-3 rounded-start-3">Fecha / Hora</th>

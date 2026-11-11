@@ -47,10 +47,10 @@
 
         #navbar {
             height: 68px;
-            background: rgba(255, 255, 255, .92);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(220, 220, 220, .75);
+            background: #ffffff !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            border-bottom: 1px solid var(--border) !important;
             z-index: 1050;
         }
 
@@ -62,9 +62,10 @@
         }
 
         .header-nav-link {
-            color: #686868 !important;
+            color: #4a5568 !important;
+            font-weight: 500;
             text-decoration: none !important;
-            transition: color .2s ease;
+            transition: color .25s ease;
         }
 
         .header-nav-link:hover,
@@ -171,8 +172,7 @@
             box-shadow: 0 15px 35px rgba(0, 0, 0, .10);
             border-radius: 12px;
             padding: 8px;
-            background: rgba(255,255,255,.97);
-            backdrop-filter: blur(12px);
+            background: #ffffff;
         }
 
         .dropdown-item {
@@ -186,6 +186,18 @@
         .dropdown-item:hover {
             background: var(--petrol-soft);
             color: var(--petrol-dark);
+        }
+
+        .dropdown-toggle.hide-arrow::after {
+            display: none !important;
+        }
+
+        .user-avatar-btn {
+            transition: opacity 0.2s ease !important;
+        }
+        
+        .user-avatar-btn:hover {
+            opacity: 0.85;
         }
 
         #mobileOverlay {
@@ -209,15 +221,17 @@
         }
 
         #mobileMenu.open {
-            max-height: 800px;
+            max-height: 900px;
             opacity: 1;
         }
 
         .mobile-menu-container {
-            background: rgba(255,255,255,.97);
-            backdrop-filter: blur(20px);
+            background: #ffffff;
             border-top: 1px solid var(--border-soft);
             box-shadow: 0 15px 35px rgba(0,0,0,.08);
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+            padding-bottom: 2.5rem !important;
         }
 
         .hamburger-line {
@@ -239,6 +253,7 @@
         <nav class="container-fluid px-4 h-100">
             <div class="d-flex align-items-center justify-content-between h-100">
 
+                <!-- 1. Logo / Identidad -->
                 <a href="{{ route('barbero.turnos') }}" class="d-flex align-items-center gap-3 text-decoration-none" style="z-index: 1060;">
                     <img src="{{ asset('logos/cortebarba2.png') }}" alt="Fede looK Barbería" class="logo-header">
                     <span class="fs-5 fw-bold text-dark" style="letter-spacing: -.015em;">
@@ -246,64 +261,54 @@
                     </span>
                 </a>
 
-                <!-- Desktop: Ver Sitio Público -->
+                <!-- 2. Enlace a sitio público (Escritorio) -->
                 <div class="d-none d-md-flex align-items-center gap-4">
                     <a href="{{ url('/') }}" class="header-nav-link fw-medium" target="_blank">Ver Sitio Público <i class="bi bi-box-arrow-up-right small"></i></a>
                 </div>
 
-                <!-- Botones del usuario Desktop -->
+                <!-- 3. Perfil de Usuario / Avatar con menú desplegable (Escritorio) -->
                 <div class="d-none d-md-flex align-items-center gap-2">
                     @auth
-                        <a href="{{ route('barbero.turnos') }}" class="btn btn-petrol px-3 py-1-5 text-white fw-semibold">Agenda</a>
+                        <div class="dropdown d-flex align-items-center">
+                            <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle hide-arrow user-avatar-btn" id="userMenuDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                @php
+                                    $avatar = Auth::user()->avatar ?? null;
+                                    $isGoogleAvatar = $avatar && (\Illuminate\Support\Str::startsWith($avatar, ['http://', 'https://']));
+                                @endphp
 
-                        <form action="{{ route('logout') }}" method="POST" class="d-inline">
-                            @csrf
-                            <button type="submit" class="btn btn-outline-petrol px-3 py-1-5 fw-semibold">
-                                Cerrar sesión
-                            </button>
-                        </form>
+                                @if($avatar)
+                                    <img src="{{ $isGoogleAvatar ? $avatar : asset('storage/' . $avatar) }}" alt="Avatar" class="rounded-circle border border-2 border-white shadow-sm global-user-avatar" id="navbar-avatar-preview" style="width: 42px; height: 42px; object-fit: cover;">
+                                @else
+                                    <img src="#" alt="Avatar" class="rounded-circle border border-2 border-white shadow-sm global-user-avatar d-none" id="navbar-avatar-preview" style="width: 42px; height: 42px; object-fit: cover;">
+                                    <div id="navbar-avatar-placeholder" class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center shadow-sm border border-2 border-white" style="width: 42px; height: 42px; font-weight: bold; font-size: 14px;">
+                                        {{ strtoupper(substr(Auth::user()->nombre ?? (Auth::user()->name ?? 'U'), 0, 1)) }}
+                                    </div>
+                                @endif
+                            </a>
 
-                        <a href="{{ route('perfil.index') }}" class="d-inline-flex align-items-center text-decoration-none ms-2" title="Mi Perfil">
-    @php
-        $avatar = Auth::user()->avatar ?? null;
-        $isGoogleAvatar = $avatar && (\Illuminate\Support\Str::startsWith($avatar, ['http://', 'https://']));
-    @endphp
-
-    {{-- Imagen de perfil global (Barbero) --}}
-    <img src="{{ $avatar ? ($isGoogleAvatar ? $avatar : asset('storage/' . $avatar)) : '#' }}" 
-         alt="Avatar" 
-         class="rounded-circle border border-2 border-white shadow-sm global-user-avatar {{ !$avatar ? 'd-none' : '' }}" 
-         id="navbar-avatar-preview"
-         style="width: 38px; height: 38px; object-fit: cover;">
-
-    {{-- Inicial por defecto global (Barbero) --}}
-    <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center shadow-sm border border-2 border-white {{ $avatar ? 'd-none' : '' }}" 
-         id="navbar-avatar-placeholder" 
-         style="width: 38px; height: 38px; font-weight: bold; font-size: 14px;">
-        {{ strtoupper(substr(Auth::user()->nombre ?? (Auth::user()->name ?? 'U'), 0, 1)) }}
-    </div>
-</a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 py-2 mt-2" aria-labelledby="userMenuDropdown" style="border-radius: 12px; min-width: 210px;">
+                                <li class="px-3 py-2 mb-1 text-muted small border-bottom text-truncate" style="max-width: 220px;">
+                                    Hola, <strong class="text-dark">{{ Auth::user()->nombre ?? (Auth::user()->name ?? 'Usuario') }}</strong>
+                                </li>
+                                <li><a class="dropdown-item py-2" href="{{ route('perfil.index') }}"><i class="bi bi-person-gear me-2 text-muted"></i> Mi Perfil</a></li>
+                                <li><hr class="dropdown-divider my-1"></li>
+                                <li>
+                                    <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item py-2 text-danger w-100 text-start"><i class="bi bi-box-arrow-right me-2"></i> Cerrar sesión</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
                     @endauth
                 </div>
 
-                <!-- Botón Avatar & Menú Hamburguesa Móvil -->
+                <!-- Control Móvil (Solo Botón Hamburguesa, sin avatar duplicado afuera) -->
                 <div class="d-flex align-items-center gap-2 d-md-none">
-                    @auth
-                        <a href="{{ route('perfil.index') }}" class="d-inline-flex align-items-center text-decoration-none me-1" title="Mi Perfil">
-                            @if(Auth::user()->avatar)
-                                <img src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="Avatar" class="rounded-circle border border-2 border-white shadow-sm" style="width: 36px; height: 36px; object-fit: cover;">
-                            @else
-                                <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center shadow-sm border border-2 border-white" style="width: 36px; height: 36px; font-weight: bold; font-size: 13px;">
-                                    {{ strtoupper(substr(Auth::user()->nombre ?? Auth::user()->name ?? 'U', 0, 1)) }}
-                                </div>
-                            @endif
-                        </a>
-                    @endauth
-
-                    <button id="menuButton" type="button" aria-label="Abrir menú" aria-expanded="false" class="btn p-0 rounded-3 d-flex flex-column align-items-center justify-content-center" style="z-index: 1060; width: 44px; height: 44px; background: rgba(255,255,255,.88); border: 1px solid #222222;">
-                        <span class="hamburger-line line-1 d-block rounded" style="width: 24px; height: 2px; margin: 2.5px 0; background: #111111;"></span>
-                        <span class="hamburger-line line-2 d-block rounded" style="width: 24px; height: 2px; margin: 2.5px 0; background: #111111;"></span>
-                        <span class="hamburger-line line-3 d-block rounded" style="width: 24px; height: 2px; margin: 2.5px 0; background: #111111;"></span>
+                    <button id="menuButton" type="button" aria-label="Abrir menú" aria-expanded="false" class="btn p-0 rounded-3 d-flex flex-column align-items-center justify-content-center border-0 bg-transparent" style="z-index: 1060; width: 42px; height: 42px; border: 1px solid var(--border) !important;">
+                        <span class="hamburger-line line-1 d-block rounded-pill" style="width: 22px; height: 2px; margin: 3px 0; background: #111111;"></span>
+                        <span class="hamburger-line line-2 d-block rounded-pill" style="width: 22px; height: 2px; margin: 3px 0; background: #111111;"></span>
+                        <span class="hamburger-line line-3 d-block rounded-pill" style="width: 22px; height: 2px; margin: 3px 0; background: #111111;"></span>
                     </button>
                 </div>
 
@@ -311,29 +316,53 @@
 
             <!-- Desplegable Menú Móvil -->
             <div id="mobileMenu" class="d-md-none">
-                <div class="mobile-menu-container rounded-bottom-4 pb-4 pt-3 mt-3 px-3">
+                <div class="mobile-menu-container rounded-bottom-4 pb-4 pt-3 mt-2 px-3 shadow-lg">
                     @auth
+                        <!-- Tarjeta de perfil dentro del menú móvil -->
+                        <div class="d-flex align-items-center gap-3 px-3 py-3 mb-3 bg-light rounded-4 border-0">
+                            @php
+                                $avatar = Auth::user()->avatar ?? null;
+                                $isGoogleAvatar = $avatar && (\Illuminate\Support\Str::startsWith($avatar, ['http://', 'https://']));
+                            @endphp
+
+                            @if($avatar)
+                                <img src="{{ $isGoogleAvatar ? $avatar : asset('storage/' . $avatar) }}" alt="Avatar" class="rounded-circle border border-2 border-white shadow-sm" style="width: 42px; height: 42px; object-fit: cover;">
+                            @else
+                                <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center shadow-sm border border-2 border-white" style="width: 42px; height: 42px; font-weight: bold; font-size: 15px;">
+                                    {{ strtoupper(substr(Auth::user()->nombre ?? (Auth::user()->name ?? 'U'), 0, 1)) }}
+                                </div>
+                            @endif
+
+                            <div class="text-truncate">
+                                <div class="fw-bold text-dark text-truncate small">{{ Auth::user()->nombre ?? (Auth::user()->name ?? 'Usuario') }}</div>
+                                <a href="{{ route('perfil.index') }}" class="text-decoration-none text-muted" style="font-size: 12px;">Editar perfil</a>
+                            </div>
+                        </div>
+
                         @if(auth()->user()->rol_id == 2)
-                            <a href="{{ url('/') }}" class="mobile-link nav-link p-2 rounded text-petrol fw-bold mb-2 border border-petrol" style="border-color: var(--petrol) !important;">
-                                <i class="bi bi-box-arrow-in-right me-2"></i> Ver Sitio Público
+                            <a href="{{ url('/') }}" class="mobile-link nav-link p-3 rounded-3 text-petrol fw-bold mb-2 border border-petrol d-flex align-items-center" style="border-color: var(--petrol) !important;">
+                                <i class="bi bi-box-arrow-in-right me-3 fs-5"></i> Ver Sitio Público
                             </a>
 
-                            <div class="fw-bold small text-uppercase text-secondary mb-2 mt-3">Mi Panel (Barbero)</div>
+                            <div class="fw-bold small text-uppercase text-secondary mb-2 mt-3 px-1">Mi Panel (Barbero)</div>
                             
-                            <a href="{{ route('barbero.turnos') }}" class="mobile-link nav-link p-2 rounded text-dark fw-semibold">
-                                <i class="bi bi-calendar-check-fill me-2 text-petrol"></i> Mis Turnos
-                            </a>
-                            <a href="{{ route('barbero.progreso') }}" class="mobile-link nav-link p-2 rounded text-dark fw-semibold">
-                                <i class="bi bi-graph-up-arrow me-2 text-petrol"></i> Mi Progreso
-                            </a>
-                            <a href="{{ route('perfil.index') }}" class="mobile-link nav-link p-2 rounded text-dark fw-semibold">
-                                <i class="bi bi-person-circle me-2 text-petrol"></i> Mi Perfil
-                            </a>
+                            <nav class="d-flex flex-column gap-1">
+                                <a href="{{ route('barbero.turnos') }}" class="mobile-link nav-link px-3 py-2.5 rounded-3 text-dark fw-semibold {{ request()->routeIs('barbero.turnos*') ? 'bg-light text-petrol' : '' }}">
+                                    <i class="bi bi-calendar-check-fill me-3 text-petrol fs-5"></i> Mis Turnos
+                                </a>
+                                <a href="{{ route('barbero.progreso') }}" class="mobile-link nav-link px-3 py-2.5 rounded-3 text-dark fw-semibold {{ request()->routeIs('barbero.progreso*') ? 'bg-light text-petrol' : '' }}">
+                                    <i class="bi bi-graph-up-arrow me-3 text-petrol fs-5"></i> Mi Progreso
+                                </a>
+                            </nav>
 
-                            <form action="{{ route('logout') }}" method="POST" class="mt-3">
-                                @csrf
-                                <button type="submit" class="btn btn-outline-petrol w-100 py-2 fw-semibold">Cerrar sesión</button>
-                            </form>
+                            <div class="border-top mt-3 pt-3 px-1">
+                                <form action="{{ route('logout') }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-light w-100 py-3 fw-semibold text-danger border-0 rounded-3 text-start px-3 d-flex align-items-center">
+                                        <i class="bi bi-box-arrow-right me-3 fs-5"></i> Cerrar sesión
+                                    </button>
+                                </form>
+                            </div>
                         @endif
                     @endauth
                 </div>
@@ -393,16 +422,22 @@
         const mobileOverlay = document.getElementById('mobileOverlay');
 
         function openMobileMenu() {
+            if (!mobileMenu || !mobileOverlay || !menuButton) return;
             mobileMenu.classList.add('open');
             mobileOverlay.classList.add('open');
             menuButton.classList.add('menu-open');
+            menuButton.setAttribute('aria-expanded', 'true');
+            menuButton.setAttribute('aria-label', 'Cerrar menú');
             document.body.style.overflow = 'hidden';
         }
 
         function closeMobileMenu() {
+            if (!mobileMenu || !mobileOverlay || !menuButton) return;
             mobileMenu.classList.remove('open');
             mobileOverlay.classList.remove('open');
             menuButton.classList.remove('menu-open');
+            menuButton.setAttribute('aria-expanded', 'false');
+            menuButton.setAttribute('aria-label', 'Abrir menú');
             document.body.style.overflow = '';
         }
 
@@ -422,6 +457,18 @@
 
         document.querySelectorAll('.mobile-link').forEach(function (link) {
             link.addEventListener('click', closeMobileMenu);
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && mobileMenu && mobileMenu.classList.contains('open')) {
+                closeMobileMenu();
+            }
+        });
+
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768) {
+                closeMobileMenu();
+            }
         });
     </script>
 
